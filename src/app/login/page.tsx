@@ -104,8 +104,7 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-8 border-t border-slate-800 pt-6 text-center text-xs text-slate-500">
-            <p>Authorized Admin: <span className="font-semibold text-slate-400">Hritik Bhardwaj</span></p>
-            <p className="mt-1 text-[11px] text-slate-600">Default Password: <code className="bg-slate-800 px-1.5 py-0.5 rounded text-teal-400">admin@kioskpro2026</code></p>
+            <p className="text-[11px] text-slate-500">🔒 Secure Enterprise Portal • Authorized Access Only</p>
           </div>
         </div>
       </div>
