@@ -54,13 +54,16 @@ export default function Sidebar() {
         <div className="rounded-xl border border-teal-100 bg-teal-50/60 p-4 text-xs text-slate-700 space-y-2">
           <div className="flex items-center gap-2 font-bold text-teal-900">
             <QrCode className="h-4 w-4 text-teal-600" />
-            <span>Billing UPI ID</span>
+            <span>Billing UPI QR</span>
           </div>
-          <div className="font-mono bg-white rounded p-1.5 border border-teal-200 text-teal-950 select-all font-semibold">
+          <div className="flex justify-center p-2 bg-white rounded-lg border border-teal-200 shadow-sm">
+            <img src="/qr_code.jpg" alt="UPI QR Code" className="w-28 h-28 object-contain rounded" />
+          </div>
+          <div className="font-mono bg-white rounded p-1.5 border border-teal-200 text-teal-950 text-center select-all font-semibold text-[11px]">
             9212716009@yescred
           </div>
-          <p className="text-[11px] text-slate-500">
-            Clients pay here to renew their subscription.
+          <p className="text-[10px] text-slate-500 text-center">
+            Scan via GPay / PhonePe / Paytm to renew.
           </p>
         </div>
       </div>
