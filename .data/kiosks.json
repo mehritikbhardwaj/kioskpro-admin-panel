@@ -1,0 +1,26 @@
+{
+  "kiosks": [
+    {
+      "id": "kiosk-001",
+      "cspCode": "3A450557",
+      "operatorName": "Nagmani Bhardwaj",
+      "mobileNumber": "9212716009",
+      "location": "Patna, Bihar",
+      "plan": "12_MONTHS",
+      "planName": "12 Months Enterprise",
+      "amount": 1799,
+      "issuedAt": "2026-11-09T00:00:00.000Z",
+      "expiresAt": "2027-11-09T23:59:59.000Z",
+      "status": "ACTIVE",
+      "notes": "Primary Master Kiosk - 12 Months Subscribed",
+      "lastSeenAt": "2026-11-09T09:16:56.199Z"
+    }
+  ],
+  "broadcast": {
+    "enabled": true,
+    "message": "Welcome to KioskPro Enterprise! High-speed automated SBI Kiosk portal active.",
+    "level": "info",
+    "updatedAt": "2026-11-09T09:16:56.200Z"
+  },
+  "updatedAt": "2026-11-09T09:16:56.200Z"
+}
