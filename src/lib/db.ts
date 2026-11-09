@@ -37,16 +37,18 @@ const SYSTEM_CONFIG: SystemConfig = {
 };
 
 function getRedisClient(): Redis | null {
-  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
-  if (url && token) {
-    try {
-      return new Redis({ url, token });
-    } catch {
-      return null;
-    }
+  const url = process.env.UPSTASH_REDIS_REST_URL 
+    || process.env.KV_REST_API_URL 
+    || 'https://oriented-narwhal-73778.upstash.io';
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN 
+    || process.env.KV_REST_API_TOKEN 
+    || 'gQAAAAAAASAyAAIgcDEzYmRkOWZjNzdiYzU0ZTUzYTkzMzcxN2ZkYzkwZWNjOQ';
+  try {
+    return new Redis({ url, token });
+  } catch (err) {
+    console.warn('Failed to initialize Upstash Redis:', err);
+    return null;
   }
-  return null;
 }
 
 // Global in-memory storage for fallback
@@ -158,7 +160,7 @@ export async function getKioskByCspCode(cspCode: string): Promise<KioskLicense |
 }
 
 export async function addKiosk(data: Omit<KioskLicense, 'id' | 'issuedAt' | 'expiresAt' | 'status'> & { durationMonths?: number }): Promise<KioskLicense> {
-  await getKiosks();
+  const kiosks = await getKiosks();
   const now = new Date();
   const months = data.durationMonths || (data.plan === '1_MONTH' ? 1 : data.plan === '3_MONTHS' ? 3 : data.plan === '6_MONTHS' ? 6 : data.plan === '12_MONTHS' ? 12 : 120);
   
@@ -173,30 +175,32 @@ export async function addKiosk(data: Omit<KioskLicense, 'id' | 'issuedAt' | 'exp
     status: 'ACTIVE',
   };
 
-  inMemoryKiosks.unshift(newKiosk);
+  kiosks.unshift(newKiosk);
+  inMemoryKiosks = kiosks;
   await persistData();
   return newKiosk;
 }
 
 export async function updateKiosk(id: string, updates: Partial<KioskLicense>): Promise<KioskLicense | null> {
-  await getKiosks();
-  const idx = inMemoryKiosks.findIndex((k) => k.id === id);
+  const kiosks = await getKiosks();
+  const idx = kiosks.findIndex((k) => k.id === id || k.cspCode.toLowerCase() === id.toLowerCase());
   if (idx === -1) return null;
 
-  inMemoryKiosks[idx] = {
-    ...inMemoryKiosks[idx],
+  kiosks[idx] = {
+    ...kiosks[idx],
     ...updates,
   };
+  inMemoryKiosks = kiosks;
   await persistData();
-  return inMemoryKiosks[idx];
+  return kiosks[idx];
 }
 
 export async function renewKiosk(id: string, days: number): Promise<KioskLicense | null> {
-  await getKiosks();
-  const idx = inMemoryKiosks.findIndex((k) => k.id === id);
+  const kiosks = await getKiosks();
+  const idx = kiosks.findIndex((k) => k.id === id || k.cspCode.toLowerCase() === id.toLowerCase());
   if (idx === -1) return null;
 
-  const current = inMemoryKiosks[idx];
+  const current = kiosks[idx];
   const now = new Date();
   const currentExpiry = new Date(current.expiresAt);
   const baseDate = currentExpiry > now ? currentExpiry : now;
@@ -204,34 +208,37 @@ export async function renewKiosk(id: string, days: number): Promise<KioskLicense
   const newExpiry = new Date(baseDate);
   newExpiry.setDate(newExpiry.getDate() + days);
 
-  inMemoryKiosks[idx] = {
+  kiosks[idx] = {
     ...current,
     expiresAt: newExpiry.toISOString(),
     status: 'ACTIVE',
   };
 
+  inMemoryKiosks = kiosks;
   await persistData();
-  return inMemoryKiosks[idx];
+  return kiosks[idx];
 }
 
 export async function toggleKioskStatus(id: string, status: LicenseStatus): Promise<KioskLicense | null> {
-  await getKiosks();
-  const idx = inMemoryKiosks.findIndex((k) => k.id === id);
+  const kiosks = await getKiosks();
+  const idx = kiosks.findIndex((k) => k.id === id || k.cspCode.toLowerCase() === id.toLowerCase());
   if (idx === -1) return null;
 
-  inMemoryKiosks[idx] = {
-    ...inMemoryKiosks[idx],
+  kiosks[idx] = {
+    ...kiosks[idx],
     status,
   };
+  inMemoryKiosks = kiosks;
   await persistData();
-  return inMemoryKiosks[idx];
+  return kiosks[idx];
 }
 
 export async function deleteKiosk(id: string): Promise<boolean> {
-  await getKiosks();
-  const before = inMemoryKiosks.length;
-  inMemoryKiosks = inMemoryKiosks.filter((k) => k.id !== id);
-  if (inMemoryKiosks.length !== before) {
+  const kiosks = await getKiosks();
+  const before = kiosks.length;
+  const filtered = kiosks.filter((k) => k.id !== id && k.cspCode.toLowerCase() !== id.toLowerCase());
+  if (filtered.length !== before) {
+    inMemoryKiosks = filtered;
     await persistData();
     return true;
   }
@@ -239,13 +246,15 @@ export async function deleteKiosk(id: string): Promise<boolean> {
 }
 
 export async function updateLastSeen(cspCode: string, machineHwid?: string): Promise<void> {
+  const kiosks = await getKiosks();
   const clean = cspCode.trim().toLowerCase();
-  const kiosk = inMemoryKiosks.find((k) => k.cspCode.trim().toLowerCase() === clean);
+  const kiosk = kiosks.find((k) => k.cspCode.trim().toLowerCase() === clean);
   if (kiosk) {
     kiosk.lastSeenAt = new Date().toISOString();
     if (machineHwid && !kiosk.machineHwid) {
       kiosk.machineHwid = machineHwid;
     }
+    inMemoryKiosks = kiosks;
     await persistData();
   }
 }
@@ -257,6 +266,7 @@ export async function getBroadcast(): Promise<BroadcastAnnouncement> {
       const data = await redis.get<BroadcastAnnouncement>('kioskpro_broadcast');
       if (data && data.message) {
         inMemoryBroadcast = data;
+        return inMemoryBroadcast;
       } else {
         await redis.set('kioskpro_broadcast', inMemoryBroadcast);
       }
@@ -268,6 +278,7 @@ export async function getBroadcast(): Promise<BroadcastAnnouncement> {
 }
 
 export async function setBroadcast(broadcast: Partial<BroadcastAnnouncement>): Promise<BroadcastAnnouncement> {
+  await getBroadcast();
   inMemoryBroadcast = {
     ...inMemoryBroadcast,
     ...broadcast,

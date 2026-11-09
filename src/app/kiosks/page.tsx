@@ -28,6 +28,7 @@ export default function KiosksPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'EXPIRED' | 'SUSPENDED'>('ALL');
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   const fetchData = async () => {
     try {
@@ -53,40 +54,72 @@ export default function KiosksPage() {
   }, []);
 
   const handleRenew = async (id: string, days: number) => {
+    setActionLoadingId(id);
     try {
       const res = await fetch('/api/admin/kiosks', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, action: 'RENEW', days }),
       });
-      if (res.ok) fetchData();
-    } catch (err) {
-      console.error(err);
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        alert(json.message || 'Error renewing kiosk license');
+      } else {
+        await fetchData();
+      }
+    } catch (err: any) {
+      alert('Network error: ' + err.message);
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
   const handleToggleStatus = async (id: string, newStatus: string) => {
+    const prevKiosks = [...kiosks];
+    // Optimistic UI update
+    setKiosks((prev) =>
+      prev.map((k) => (k.id === id || k.cspCode === id ? { ...k, status: newStatus as any } : k))
+    );
+    setActionLoadingId(id);
+
     try {
       const res = await fetch('/api/admin/kiosks', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, action: 'SET_STATUS', status: newStatus }),
       });
-      if (res.ok) fetchData();
-    } catch (err) {
-      console.error(err);
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setKiosks(prevKiosks);
+        alert(json.message || 'Failed to update kiosk status');
+      } else {
+        await fetchData();
+      }
+    } catch (err: any) {
+      setKiosks(prevKiosks);
+      alert('Network error: ' + err.message);
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete kiosk license for ${name}?`)) return;
+    setActionLoadingId(id);
     try {
       const res = await fetch(`/api/admin/kiosks?id=${id}`, {
         method: 'DELETE',
       });
-      if (res.ok) fetchData();
-    } catch (err) {
-      console.error(err);
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        alert(json.message || 'Failed to delete kiosk');
+      } else {
+        await fetchData();
+      }
+    } catch (err: any) {
+      alert('Network error: ' + err.message);
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
@@ -274,18 +307,24 @@ export default function KiosksPage() {
                               {kiosk.status === 'ACTIVE' ? (
                                 <button
                                   onClick={() => handleToggleStatus(kiosk.id, 'SUSPENDED')}
+                                  disabled={actionLoadingId === kiosk.id}
                                   title="Suspend License"
-                                  className="rounded-lg bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition"
+                                  className={`rounded-lg bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition ${
+                                    actionLoadingId === kiosk.id ? 'opacity-60 cursor-wait' : ''
+                                  }`}
                                 >
-                                  Block
+                                  {actionLoadingId === kiosk.id ? 'Blocking...' : 'Block'}
                                 </button>
                               ) : (
                                 <button
                                   onClick={() => handleToggleStatus(kiosk.id, 'ACTIVE')}
+                                  disabled={actionLoadingId === kiosk.id}
                                   title="Reactivate License"
-                                  className="rounded-lg bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition"
+                                  className={`rounded-lg bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition ${
+                                    actionLoadingId === kiosk.id ? 'opacity-60 cursor-wait' : ''
+                                  }`}
                                 >
-                                  Active
+                                  {actionLoadingId === kiosk.id ? 'Activating...' : 'Activate'}
                                 </button>
                               )}
 

@@ -95,16 +95,25 @@ export async function PATCH(req: NextRequest) {
     if (action === 'RENEW') {
       const daysToAdd = Number(days) || 30;
       const renewed = await renewKiosk(id, daysToAdd);
+      if (!renewed) {
+        return NextResponse.json({ success: false, message: `Kiosk '${id}' not found` }, { status: 404 });
+      }
       return NextResponse.json({ success: true, data: renewed });
     }
 
     if (action === 'SET_STATUS' && status) {
       const updated = await toggleKioskStatus(id, status);
+      if (!updated) {
+        return NextResponse.json({ success: false, message: `Kiosk '${id}' not found` }, { status: 404 });
+      }
       return NextResponse.json({ success: true, data: updated });
     }
 
     if (action === 'UPDATE' && updates) {
       const updated = await updateKiosk(id, updates);
+      if (!updated) {
+        return NextResponse.json({ success: false, message: `Kiosk '${id}' not found` }, { status: 404 });
+      }
       return NextResponse.json({ success: true, data: updated });
     }
 
