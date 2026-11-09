@@ -1,3 +1,4 @@
+import { Redis } from '@upstash/redis';
 import fs from 'fs';
 import path from 'path';
 import { KioskLicense, BroadcastAnnouncement, SystemConfig, LicenseStatus } from './types';
@@ -31,11 +32,24 @@ const SYSTEM_CONFIG: SystemConfig = {
   distributorName: 'Hritik Bhardwaj',
   distributorPhone: '9212716009',
   distributorUpi: '9212716009@yescred',
-  minRequiredVersion: '2.0.5',
-  latestVersion: '2.0.5'
+  minRequiredVersion: '2.0.6',
+  latestVersion: '2.0.6'
 };
 
-// Global in-memory storage for serverless runtime
+function getRedisClient(): Redis | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+  if (url && token) {
+    try {
+      return new Redis({ url, token });
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+// Global in-memory storage for fallback
 let inMemoryKiosks: KioskLicense[] = [...INITIAL_KIOSKS];
 let inMemoryBroadcast: BroadcastAnnouncement = { ...INITIAL_BROADCAST };
 
@@ -51,7 +65,7 @@ function ensureDataFile() {
     if (fs.existsSync(DATA_FILE)) {
       const content = fs.readFileSync(DATA_FILE, 'utf-8');
       const parsed = JSON.parse(content);
-      if (Array.isArray(parsed.kiosks)) {
+      if (Array.isArray(parsed.kiosks) && parsed.kiosks.length > 0) {
         inMemoryKiosks = parsed.kiosks;
       }
       if (parsed.broadcast) {
@@ -61,7 +75,7 @@ function ensureDataFile() {
       saveToFile();
     }
   } catch (err) {
-    console.error('File storage access error (using memory fallback):', err);
+    // In read-only serverless environments, file access is safely bypassed
   }
 }
 
@@ -82,17 +96,43 @@ function saveToFile() {
         2
       )
     );
-  } catch (err) {
-    // In serverless environment like Vercel Lambda, disk write might be read-only
-    console.warn('Could not persist to disk (serverless runtime):', err);
-  }
+  } catch { }
 }
 
-// Initialize on first load
+async function persistData() {
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      await redis.set('kioskpro_kiosks', inMemoryKiosks);
+      await redis.set('kioskpro_broadcast', inMemoryBroadcast);
+    } catch (err) {
+      console.warn('Redis write error:', err);
+    }
+  }
+  saveToFile();
+}
+
+// Initialize file cache on load
 ensureDataFile();
 
 export async function getKiosks(): Promise<KioskLicense[]> {
-  ensureDataFile();
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const data = await redis.get<KioskLicense[]>('kioskpro_kiosks');
+      if (Array.isArray(data) && data.length > 0) {
+        inMemoryKiosks = data;
+      } else {
+        // Seed initial data into newly connected Redis
+        await redis.set('kioskpro_kiosks', inMemoryKiosks);
+      }
+    } catch (err) {
+      console.warn('Redis read error, fallback to memory:', err);
+    }
+  } else {
+    ensureDataFile();
+  }
+
   // Auto-check and mark expired kiosks
   const now = new Date();
   let modified = false;
@@ -103,7 +143,11 @@ export async function getKiosks(): Promise<KioskLicense[]> {
     }
     return k;
   });
-  if (modified) saveToFile();
+
+  if (modified) {
+    await persistData();
+  }
+
   return inMemoryKiosks;
 }
 
@@ -114,7 +158,7 @@ export async function getKioskByCspCode(cspCode: string): Promise<KioskLicense |
 }
 
 export async function addKiosk(data: Omit<KioskLicense, 'id' | 'issuedAt' | 'expiresAt' | 'status'> & { durationMonths?: number }): Promise<KioskLicense> {
-  ensureDataFile();
+  await getKiosks();
   const now = new Date();
   const months = data.durationMonths || (data.plan === '1_MONTH' ? 1 : data.plan === '3_MONTHS' ? 3 : data.plan === '6_MONTHS' ? 6 : data.plan === '12_MONTHS' ? 12 : 120);
   
@@ -130,12 +174,12 @@ export async function addKiosk(data: Omit<KioskLicense, 'id' | 'issuedAt' | 'exp
   };
 
   inMemoryKiosks.unshift(newKiosk);
-  saveToFile();
+  await persistData();
   return newKiosk;
 }
 
 export async function updateKiosk(id: string, updates: Partial<KioskLicense>): Promise<KioskLicense | null> {
-  ensureDataFile();
+  await getKiosks();
   const idx = inMemoryKiosks.findIndex((k) => k.id === id);
   if (idx === -1) return null;
 
@@ -143,12 +187,12 @@ export async function updateKiosk(id: string, updates: Partial<KioskLicense>): P
     ...inMemoryKiosks[idx],
     ...updates,
   };
-  saveToFile();
+  await persistData();
   return inMemoryKiosks[idx];
 }
 
 export async function renewKiosk(id: string, days: number): Promise<KioskLicense | null> {
-  ensureDataFile();
+  await getKiosks();
   const idx = inMemoryKiosks.findIndex((k) => k.id === id);
   if (idx === -1) return null;
 
@@ -166,12 +210,12 @@ export async function renewKiosk(id: string, days: number): Promise<KioskLicense
     status: 'ACTIVE',
   };
 
-  saveToFile();
+  await persistData();
   return inMemoryKiosks[idx];
 }
 
 export async function toggleKioskStatus(id: string, status: LicenseStatus): Promise<KioskLicense | null> {
-  ensureDataFile();
+  await getKiosks();
   const idx = inMemoryKiosks.findIndex((k) => k.id === id);
   if (idx === -1) return null;
 
@@ -179,23 +223,22 @@ export async function toggleKioskStatus(id: string, status: LicenseStatus): Prom
     ...inMemoryKiosks[idx],
     status,
   };
-  saveToFile();
+  await persistData();
   return inMemoryKiosks[idx];
 }
 
 export async function deleteKiosk(id: string): Promise<boolean> {
-  ensureDataFile();
+  await getKiosks();
   const before = inMemoryKiosks.length;
   inMemoryKiosks = inMemoryKiosks.filter((k) => k.id !== id);
   if (inMemoryKiosks.length !== before) {
-    saveToFile();
+    await persistData();
     return true;
   }
   return false;
 }
 
 export async function updateLastSeen(cspCode: string, machineHwid?: string): Promise<void> {
-  ensureDataFile();
   const clean = cspCode.trim().toLowerCase();
   const kiosk = inMemoryKiosks.find((k) => k.cspCode.trim().toLowerCase() === clean);
   if (kiosk) {
@@ -203,23 +246,34 @@ export async function updateLastSeen(cspCode: string, machineHwid?: string): Pro
     if (machineHwid && !kiosk.machineHwid) {
       kiosk.machineHwid = machineHwid;
     }
-    saveToFile();
+    await persistData();
   }
 }
 
 export async function getBroadcast(): Promise<BroadcastAnnouncement> {
-  ensureDataFile();
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const data = await redis.get<BroadcastAnnouncement>('kioskpro_broadcast');
+      if (data && data.message) {
+        inMemoryBroadcast = data;
+      } else {
+        await redis.set('kioskpro_broadcast', inMemoryBroadcast);
+      }
+    } catch { }
+  } else {
+    ensureDataFile();
+  }
   return inMemoryBroadcast;
 }
 
 export async function setBroadcast(broadcast: Partial<BroadcastAnnouncement>): Promise<BroadcastAnnouncement> {
-  ensureDataFile();
   inMemoryBroadcast = {
     ...inMemoryBroadcast,
     ...broadcast,
     updatedAt: new Date().toISOString(),
   };
-  saveToFile();
+  await persistData();
   return inMemoryBroadcast;
 }
 
