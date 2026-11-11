@@ -88,11 +88,11 @@ export default function DashboardPage() {
     const isBlocking = newStatus === 'SUSPENDED';
     setConfirmConfig({
       isOpen: true,
-      title: isBlocking ? 'Confirm Block License' : 'Confirm Activate License',
+      title: isBlocking ? 'Confirm Block License' : 'Confirm Unblock License',
       message: isBlocking
         ? `Are you sure you want to BLOCK CSP ${kiosk.cspCode} (${kiosk.operatorName})? The agent software will be immediately blocked from logging in or performing any kiosk services.`
-        : `Are you sure you want to UNBLOCK / ACTIVATE CSP ${kiosk.cspCode} (${kiosk.operatorName})? The agent will immediately regain full access.`,
-      confirmText: isBlocking ? 'Yes, Block License' : 'Yes, Activate License',
+        : `Are you sure you want to UNBLOCK CSP ${kiosk.cspCode} (${kiosk.operatorName})? The agent will immediately regain full access to KioskPro.`,
+      confirmText: isBlocking ? 'Yes, Block License' : 'Yes, Unblock License',
       variant: isBlocking ? 'danger' : 'success',
       iconType: isBlocking ? 'block' : 'check',
       action: () => handleToggleStatus(kiosk.id, newStatus),
@@ -497,12 +497,12 @@ export default function DashboardPage() {
                                 <button
                                   onClick={() => promptToggleStatus(kiosk, 'ACTIVE')}
                                   disabled={actionLoadingId === kiosk.id}
-                                  title="Reactivate License"
+                                  title="Unblock License"
                                   className={`rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition ${
                                     actionLoadingId === kiosk.id ? 'opacity-60 cursor-wait' : ''
                                   }`}
                                 >
-                                  {actionLoadingId === kiosk.id ? 'Activating...' : 'Activate'}
+                                  {actionLoadingId === kiosk.id ? 'Unblocking...' : 'Unblock'}
                                 </button>
                               )}
                             </div>
@@ -617,7 +617,7 @@ export default function DashboardPage() {
                             disabled={actionLoadingId === kiosk.id}
                             className="flex items-center justify-center py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold active:bg-emerald-100 transition"
                           >
-                            {actionLoadingId === kiosk.id ? '...' : 'Activate'}
+                            {actionLoadingId === kiosk.id ? '...' : 'Unblock'}
                           </button>
                         )}
                       </div>
