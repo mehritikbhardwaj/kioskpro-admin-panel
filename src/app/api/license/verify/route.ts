@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     const hwid = searchParams.get('hwid') || '';
     const version = searchParams.get('version') || '';
 
-    const systemConfig = getSystemConfig();
+    const systemConfig = await getSystemConfig();
     const broadcast = await getBroadcast();
 
     if (!cspCode || cspCode.trim() === '') {
@@ -22,6 +22,8 @@ export async function GET(req: NextRequest) {
           supportContact: systemConfig.distributorPhone,
           distributor: systemConfig.distributorName,
           upiId: systemConfig.distributorUpi,
+          qrCodeUrl: systemConfig.qrCodeUrl,
+          plans: systemConfig.plans,
         },
         { status: 400 }
       );
@@ -39,6 +41,8 @@ export async function GET(req: NextRequest) {
           supportContact: systemConfig.distributorPhone,
           distributor: systemConfig.distributorName,
           upiId: systemConfig.distributorUpi,
+          qrCodeUrl: systemConfig.qrCodeUrl,
+          plans: systemConfig.plans,
         },
         { status: 404 }
       );
@@ -64,6 +68,8 @@ export async function GET(req: NextRequest) {
         supportContact: systemConfig.distributorPhone,
         distributor: systemConfig.distributorName,
         upiId: systemConfig.distributorUpi,
+        qrCodeUrl: systemConfig.qrCodeUrl,
+        plans: systemConfig.plans,
         daysRemaining,
         expiresAt: kiosk.expiresAt,
         hasActiveSubscription: daysRemaining > 0,
@@ -88,6 +94,8 @@ export async function GET(req: NextRequest) {
         supportContact: systemConfig.distributorPhone,
         distributor: systemConfig.distributorName,
         upiId: systemConfig.distributorUpi,
+        qrCodeUrl: systemConfig.qrCodeUrl,
+        plans: systemConfig.plans,
       });
     }
 
@@ -111,6 +119,8 @@ export async function GET(req: NextRequest) {
       supportContact: systemConfig.distributorPhone,
       distributor: systemConfig.distributorName,
       upiId: systemConfig.distributorUpi,
+      qrCodeUrl: systemConfig.qrCodeUrl,
+      plans: systemConfig.plans,
     });
   } catch (error: any) {
     console.error('License verification API error:', error);

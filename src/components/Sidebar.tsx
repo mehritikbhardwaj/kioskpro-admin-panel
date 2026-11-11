@@ -9,6 +9,7 @@ import {
   Radio, 
   Settings, 
   QrCode, 
+  CreditCard,
   ExternalLink 
 } from 'lucide-react';
 
@@ -19,6 +20,7 @@ export default function Sidebar() {
     { label: 'Dashboard', href: '/', icon: LayoutDashboard },
     { label: 'Kiosks & Licenses', href: '/kiosks', icon: Users },
     { label: 'Remote Broadcast', href: '/broadcast', icon: Radio },
+    { label: 'Pricing & UPI QR', href: '/pricing', icon: CreditCard },
   ];
 
   return (
@@ -65,6 +67,12 @@ export default function Sidebar() {
           <p className="text-[10px] text-slate-500 text-center">
             Scan via GPay / PhonePe / Paytm to renew.
           </p>
+          <Link
+            href="/pricing"
+            className="flex items-center justify-center gap-1 text-[11px] text-teal-700 font-semibold bg-white p-1.5 rounded-lg border border-teal-200 hover:bg-teal-50 transition"
+          >
+            ⚙️ Edit Pricing &amp; QR
+          </Link>
         </div>
       </div>
 

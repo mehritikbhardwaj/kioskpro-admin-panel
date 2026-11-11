@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
@@ -19,7 +20,8 @@ import {
   Phone,
   MapPin,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  CreditCard
 } from 'lucide-react';
 import { KioskLicense } from '@/lib/types';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -250,13 +252,23 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            <button
-              onClick={() => setIsAddModalOpen(true)}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-teal-600/20 hover:bg-teal-700 transition"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Issue New License</span>
-            </button>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Link
+                href="/pricing"
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition"
+              >
+                <CreditCard className="h-4 w-4 text-teal-600" />
+                <span>Set Prices &amp; QR</span>
+              </Link>
+
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-teal-600/20 hover:bg-teal-700 transition"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Issue New License</span>
+              </button>
+            </div>
           </div>
 
           {/* Broadcast Banner */}

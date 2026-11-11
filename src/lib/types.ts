@@ -27,10 +27,23 @@ export interface BroadcastAnnouncement {
   updatedAt: string;
 }
 
+export interface PlanPricing {
+  planId: PlanType;
+  name: string;
+  durationMonths: number;
+  durationDays?: number;
+  price: number;
+  originalPrice: number;
+  badge?: string;
+  description: string;
+}
+
 export interface SystemConfig {
   distributorName: string;
   distributorPhone: string;
   distributorUpi: string;
+  qrCodeUrl?: string;
   minRequiredVersion: string;
   latestVersion: string;
+  plans: PlanPricing[];
 }

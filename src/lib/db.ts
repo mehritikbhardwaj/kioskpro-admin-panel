@@ -1,7 +1,7 @@
 import { Redis } from '@upstash/redis';
 import fs from 'fs';
 import path from 'path';
-import { KioskLicense, BroadcastAnnouncement, SystemConfig, LicenseStatus } from './types';
+import { KioskLicense, BroadcastAnnouncement, SystemConfig, LicenseStatus, PlanPricing } from './types';
 
 const INITIAL_KIOSKS: KioskLicense[] = [
   {
@@ -28,13 +28,66 @@ const INITIAL_BROADCAST: BroadcastAnnouncement = {
   updatedAt: new Date().toISOString()
 };
 
-const SYSTEM_CONFIG: SystemConfig = {
+export const DEFAULT_PLANS: PlanPricing[] = [
+  {
+    planId: '1_DAY_TRIAL',
+    name: '1-Day Free Trial',
+    durationMonths: 0,
+    durationDays: 1,
+    price: 0,
+    originalPrice: 0,
+    badge: 'Free Access',
+    description: 'Bina payment 24 ghante tak poora KioskPro chalayein',
+  },
+  {
+    planId: '1_MONTH',
+    name: '1 Month Starter License',
+    durationMonths: 1,
+    price: 199,
+    originalPrice: 299,
+    badge: 'Starter',
+    description: '30 Days full CSP auto-login & fast automation',
+  },
+  {
+    planId: '3_MONTHS',
+    name: '3 Months Quarterly Plan',
+    durationMonths: 3,
+    price: 449,
+    originalPrice: 699,
+    badge: 'Quarterly',
+    description: 'Quarterly uninterrupted kiosk automation access',
+  },
+  {
+    planId: '6_MONTHS',
+    name: '6 Months Half-Yearly Plan',
+    durationMonths: 6,
+    price: 999,
+    originalPrice: 1499,
+    badge: 'Popular',
+    description: 'Standard 6 months license for active kiosks',
+  },
+  {
+    planId: '12_MONTHS',
+    name: '12 Months Annual Access',
+    durationMonths: 12,
+    price: 1799,
+    originalPrice: 2999,
+    badge: 'Best Value',
+    description: 'Full 1 Year uninterrupted license, updates & support',
+  },
+];
+
+export const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
   distributorName: 'Hritik Bhardwaj',
   distributorPhone: '9212716009',
   distributorUpi: '9212716009@yescred',
+  qrCodeUrl: '/qr_code.jpg',
   minRequiredVersion: '2.0.9',
-  latestVersion: '2.0.9'
+  latestVersion: '2.0.9',
+  plans: DEFAULT_PLANS,
 };
+
+let inMemorySystemConfig: SystemConfig = { ...DEFAULT_SYSTEM_CONFIG };
 
 function getRedisClient(): Redis | null {
   const url = process.env.UPSTASH_REDIS_REST_URL 
@@ -73,6 +126,15 @@ function ensureDataFile() {
       if (parsed.broadcast) {
         inMemoryBroadcast = parsed.broadcast;
       }
+      if (parsed.systemConfig) {
+        inMemorySystemConfig = {
+          ...DEFAULT_SYSTEM_CONFIG,
+          ...parsed.systemConfig,
+          plans: Array.isArray(parsed.systemConfig.plans) && parsed.systemConfig.plans.length > 0
+            ? parsed.systemConfig.plans
+            : DEFAULT_PLANS,
+        };
+      }
     } else {
       saveToFile();
     }
@@ -92,6 +154,7 @@ function saveToFile() {
         {
           kiosks: inMemoryKiosks,
           broadcast: inMemoryBroadcast,
+          systemConfig: inMemorySystemConfig,
           updatedAt: new Date().toISOString()
         },
         null,
@@ -107,6 +170,7 @@ async function persistData() {
     try {
       await redis.set('kioskpro_kiosks', inMemoryKiosks);
       await redis.set('kioskpro_broadcast', inMemoryBroadcast);
+      await redis.set('kioskpro_system_config', inMemorySystemConfig);
     } catch (err) {
       console.warn('Redis write error:', err);
     }
@@ -368,6 +432,39 @@ export async function setBroadcast(broadcast: Partial<BroadcastAnnouncement>): P
   return inMemoryBroadcast;
 }
 
-export function getSystemConfig(): SystemConfig {
-  return SYSTEM_CONFIG;
+export async function getSystemConfig(): Promise<SystemConfig> {
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const data = await redis.get<SystemConfig>('kioskpro_system_config');
+      if (data && data.distributorUpi) {
+        inMemorySystemConfig = {
+          ...DEFAULT_SYSTEM_CONFIG,
+          ...data,
+          plans: Array.isArray(data.plans) && data.plans.length > 0 ? data.plans : DEFAULT_PLANS,
+        };
+        return inMemorySystemConfig;
+      } else {
+        await redis.set('kioskpro_system_config', inMemorySystemConfig);
+      }
+    } catch { }
+  } else {
+    ensureDataFile();
+  }
+  return inMemorySystemConfig;
+}
+
+export async function updateSystemConfig(config: Partial<SystemConfig>): Promise<SystemConfig> {
+  await getSystemConfig();
+  inMemorySystemConfig = {
+    ...inMemorySystemConfig,
+    ...config,
+    plans: config.plans && config.plans.length > 0 ? config.plans : inMemorySystemConfig.plans,
+  };
+  await persistData();
+  return inMemorySystemConfig;
+}
+
+export function getSystemConfigSync(): SystemConfig {
+  return inMemorySystemConfig;
 }

@@ -14,6 +14,7 @@ import {
   Users, 
   Radio, 
   QrCode,
+  CreditCard,
   Phone
 } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -50,6 +51,7 @@ export default function Navbar({ onRefresh, isLoading }: NavbarProps) {
     { label: 'Dashboard', href: '/', icon: LayoutDashboard },
     { label: 'Kiosks & Licenses', href: '/kiosks', icon: Users },
     { label: 'Remote Broadcast', href: '/broadcast', icon: Radio },
+    { label: 'Pricing & UPI QR', href: '/pricing', icon: CreditCard },
   ];
 
   return (
@@ -300,12 +302,21 @@ export default function Navbar({ onRefresh, isLoading }: NavbarProps) {
               Scan via GooglePay, PhonePe, or Paytm for instant CSP license renewal.
             </p>
 
-            <button
-              onClick={() => setQrModalOpen(false)}
-              className="w-full rounded-xl bg-slate-100 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200"
-            >
-              Close
-            </button>
+            <div className="flex gap-2">
+              <Link
+                href="/pricing"
+                onClick={() => setQrModalOpen(false)}
+                className="flex-1 flex items-center justify-center gap-1 rounded-xl bg-teal-600 py-2 text-xs font-bold text-white hover:bg-teal-700"
+              >
+                ⚙️ Set Rates &amp; UPI
+              </Link>
+              <button
+                onClick={() => setQrModalOpen(false)}
+                className="flex-1 rounded-xl bg-slate-100 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -340,6 +351,16 @@ export default function Navbar({ onRefresh, isLoading }: NavbarProps) {
         >
           <Radio className="h-4 w-4 mb-0.5" />
           <span>Broadcast</span>
+        </Link>
+
+        <Link
+          href="/pricing"
+          className={`flex flex-col items-center py-1 px-3 rounded-lg text-[10px] font-semibold transition ${
+            pathname === '/pricing' ? 'text-teal-600' : 'text-slate-500 hover:text-slate-900'
+          }`}
+        >
+          <CreditCard className="h-4 w-4 mb-0.5" />
+          <span>Pricing</span>
         </Link>
 
         <button

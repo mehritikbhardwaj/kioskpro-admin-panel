@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const systemConfig = getSystemConfig();
+    const systemConfig = await getSystemConfig();
     const result = await grantTrial(cspCode, operatorName, mobileNumber, location, hwid);
 
     return NextResponse.json({
