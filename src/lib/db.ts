@@ -450,6 +450,9 @@ export async function getSystemConfig(): Promise<SystemConfig> {
     try {
       const data = await redis.get<SystemConfig>('kioskpro_system_config');
       if (data && data.distributorUpi) {
+        if (data.distributorName === 'Hritik Bhardwaj') {
+          data.distributorName = 'KioskPro Support';
+        }
         inMemorySystemConfig = {
           ...DEFAULT_SYSTEM_CONFIG,
           ...data,

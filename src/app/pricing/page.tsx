@@ -210,7 +210,7 @@ export default function PricingPage() {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Hritik Bhardwaj"
+                      placeholder="e.g. KioskPro Support"
                       value={distributorName}
                       onChange={(e) => setDistributorName(e.target.value)}
                       className="w-full rounded-xl border border-slate-300 p-2.5 text-sm focus:border-teal-500 focus:outline-none"
