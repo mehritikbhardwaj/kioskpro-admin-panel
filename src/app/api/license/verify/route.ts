@@ -58,10 +58,16 @@ export async function GET(req: NextRequest) {
         status: 'SUSPENDED',
         cspCode: kiosk.cspCode,
         operatorName: kiosk.operatorName,
-        message: 'Your KioskPro license has been suspended. Please contact distributor to resolve.',
+        message: daysRemaining > 0
+          ? `Your account has been suspended by administration (Subscription Active: ${daysRemaining} days remaining). Please contact support at ${systemConfig.distributorPhone}.`
+          : 'Your KioskPro license has expired and been suspended. Please contact support.',
         supportContact: systemConfig.distributorPhone,
         distributor: systemConfig.distributorName,
         upiId: systemConfig.distributorUpi,
+        daysRemaining,
+        expiresAt: kiosk.expiresAt,
+        hasActiveSubscription: daysRemaining > 0,
+        plan: kiosk.planName,
       });
     }
 
