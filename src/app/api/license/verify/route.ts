@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
           valid: false,
           status: 'NOT_FOUND',
           cspCode: cspCode,
-          message: `Kiosk ID '${cspCode}' is not registered. Please contact distributor Hritik Bhardwaj (${systemConfig.distributorPhone}) to activate.`,
+          message: `Kiosk ID '${cspCode}' is not registered. Please contact distributor (${systemConfig.distributorPhone}) to activate.`,
           supportContact: systemConfig.distributorPhone,
           distributor: systemConfig.distributorName,
           upiId: systemConfig.distributorUpi,

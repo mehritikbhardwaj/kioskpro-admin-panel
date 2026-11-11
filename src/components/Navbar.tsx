@@ -81,7 +81,7 @@ export default function Navbar({ onRefresh, isLoading }: NavbarProps) {
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 truncate max-w-[140px] xs:max-w-[180px] sm:max-w-none">
-                Hritik Bhardwaj (9212716009)
+                Distributor Portal (9212716009)
               </p>
             </div>
           </Link>
@@ -218,7 +218,7 @@ export default function Navbar({ onRefresh, isLoading }: NavbarProps) {
                   className="flex items-center justify-center gap-1 text-[11px] text-teal-700 font-semibold bg-white p-1 rounded border border-teal-200 hover:bg-teal-50"
                 >
                   <Phone className="h-3 w-3" />
-                  <span>Call Hritik (9212716009)</span>
+                  <span>Call Support (9212716009)</span>
                 </a>
               </div>
             </div>

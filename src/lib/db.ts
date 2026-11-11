@@ -78,7 +78,7 @@ export const DEFAULT_PLANS: PlanPricing[] = [
 ];
 
 export const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
-  distributorName: 'Hritik Bhardwaj',
+  distributorName: 'KioskPro Support',
   distributorPhone: '9212716009',
   distributorUpi: '9212716009@yescred',
   qrCodeUrl: '/qr_code.jpg',
