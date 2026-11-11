@@ -16,6 +16,7 @@ import {
   QrCode,
   Phone
 } from 'lucide-react';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface NavbarProps {
   onRefresh?: () => void;
@@ -27,14 +28,21 @@ export default function Navbar({ onRefresh, isLoading }: NavbarProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
-  const handleLogout = async () => {
+  const handleConfirmLogout = async () => {
     try {
+      setLoggingOut(true);
       await fetch('/api/admin/logout', { method: 'POST' });
+      setShowLogoutConfirm(false);
       router.push('/login');
       router.refresh();
     } catch {
+      setShowLogoutConfirm(false);
       router.push('/login');
+    } finally {
+      setLoggingOut(false);
     }
   };
 
@@ -113,7 +121,7 @@ export default function Navbar({ onRefresh, isLoading }: NavbarProps) {
           <div className="h-4 w-px bg-slate-200 hidden sm:block" />
 
           <button
-            onClick={handleLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             className="flex items-center gap-1.5 rounded-lg bg-rose-50 px-2.5 py-1.5 sm:px-3 text-xs font-medium text-rose-700 hover:bg-rose-100 transition"
             title="Sign Out"
           >
@@ -216,7 +224,10 @@ export default function Navbar({ onRefresh, isLoading }: NavbarProps) {
               </a>
 
               <button
-                onClick={handleLogout}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setShowLogoutConfirm(true);
+                }}
                 className="flex items-center justify-center gap-1.5 w-full rounded-xl bg-rose-50 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100"
               >
                 <LogOut className="h-3.5 w-3.5" />
@@ -226,6 +237,20 @@ export default function Navbar({ onRefresh, isLoading }: NavbarProps) {
           </div>
         </div>
       )}
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        title="Confirm Logout"
+        message="Are you sure you want to sign out from the KioskPro Admin Panel?"
+        confirmText="Yes, Log Out"
+        cancelText="Cancel"
+        variant="danger"
+        iconType="logout"
+        isLoading={loggingOut}
+        onConfirm={handleConfirmLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
 
       {/* Quick QR Modal on Mobile */}
       {qrModalOpen && (

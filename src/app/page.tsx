@@ -22,6 +22,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { KioskLicense } from '@/lib/types';
+import ConfirmModal from '@/components/ConfirmModal';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -49,6 +50,54 @@ export default function DashboardPage() {
   const [formAmount, setFormAmount] = useState('1799');
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  // Confirmation dialog state
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText: string;
+    variant: 'danger' | 'warning' | 'primary' | 'success';
+    iconType: 'alert' | 'block' | 'clock' | 'logout' | 'check';
+    action: () => Promise<void> | void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    variant: 'primary',
+    iconType: 'alert',
+    action: () => {},
+  });
+  const [confirmLoading, setConfirmLoading] = useState(false);
+
+  const promptRenew = (kiosk: KioskLicense, days: number) => {
+    const isYear = days >= 365;
+    setConfirmConfig({
+      isOpen: true,
+      title: isYear ? 'Confirm 1-Year Extension' : 'Confirm 30-Day Extension',
+      message: `Are you sure you want to add ${isYear ? '1 Year (365 days)' : '30 days'} extension to CSP ${kiosk.cspCode} (${kiosk.operatorName})? The expiry date will be updated accordingly.`,
+      confirmText: isYear ? 'Yes, Add 1 Year' : 'Yes, Add 30 Days',
+      variant: 'primary',
+      iconType: 'clock',
+      action: () => handleRenew(kiosk.id, days),
+    });
+  };
+
+  const promptToggleStatus = (kiosk: KioskLicense, newStatus: string) => {
+    const isBlocking = newStatus === 'SUSPENDED';
+    setConfirmConfig({
+      isOpen: true,
+      title: isBlocking ? 'Confirm Block License' : 'Confirm Activate License',
+      message: isBlocking
+        ? `Are you sure you want to BLOCK CSP ${kiosk.cspCode} (${kiosk.operatorName})? The agent software will be immediately blocked from logging in or performing any kiosk services.`
+        : `Are you sure you want to UNBLOCK / ACTIVATE CSP ${kiosk.cspCode} (${kiosk.operatorName})? The agent will immediately regain full access.`,
+      confirmText: isBlocking ? 'Yes, Block License' : 'Yes, Activate License',
+      variant: isBlocking ? 'danger' : 'success',
+      iconType: isBlocking ? 'block' : 'check',
+      action: () => handleToggleStatus(kiosk.id, newStatus),
+    });
+  };
 
   const fetchData = async () => {
     try {
@@ -416,7 +465,7 @@ export default function DashboardPage() {
                             <div className="inline-flex items-center gap-1.5">
                               {/* Quick +30 Days */}
                               <button
-                                onClick={() => handleRenew(kiosk.id, 30)}
+                                onClick={() => promptRenew(kiosk, 30)}
                                 title="Renew for 30 Days"
                                 className="rounded-lg bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-100 transition"
                               >
@@ -425,7 +474,7 @@ export default function DashboardPage() {
 
                               {/* Quick +365 Days */}
                               <button
-                                onClick={() => handleRenew(kiosk.id, 365)}
+                                onClick={() => promptRenew(kiosk, 365)}
                                 title="Renew for 1 Year"
                                 className="rounded-lg bg-teal-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-teal-700 transition"
                               >
@@ -435,7 +484,7 @@ export default function DashboardPage() {
                               {/* Suspend / Reactivate */}
                               {kiosk.status === 'ACTIVE' ? (
                                 <button
-                                  onClick={() => handleToggleStatus(kiosk.id, 'SUSPENDED')}
+                                  onClick={() => promptToggleStatus(kiosk, 'SUSPENDED')}
                                   disabled={actionLoadingId === kiosk.id}
                                   title="Suspend License"
                                   className={`rounded-lg bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition ${
@@ -446,7 +495,7 @@ export default function DashboardPage() {
                                 </button>
                               ) : (
                                 <button
-                                  onClick={() => handleToggleStatus(kiosk.id, 'ACTIVE')}
+                                  onClick={() => promptToggleStatus(kiosk, 'ACTIVE')}
                                   disabled={actionLoadingId === kiosk.id}
                                   title="Reactivate License"
                                   className={`rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition ${
@@ -541,14 +590,14 @@ export default function DashboardPage() {
                       {/* Mobile Touch Action Buttons */}
                       <div className="grid grid-cols-3 gap-2 pt-1">
                         <button
-                          onClick={() => handleRenew(kiosk.id, 30)}
+                          onClick={() => promptRenew(kiosk, 30)}
                           className="flex items-center justify-center py-1.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-800 text-xs font-bold active:bg-teal-100 transition"
                         >
                           +30 Days
                         </button>
 
                         <button
-                          onClick={() => handleRenew(kiosk.id, 365)}
+                          onClick={() => promptRenew(kiosk, 365)}
                           className="flex items-center justify-center py-1.5 rounded-lg bg-teal-600 text-white text-xs font-bold shadow-sm active:bg-teal-700 transition"
                         >
                           +1 Year
@@ -556,7 +605,7 @@ export default function DashboardPage() {
 
                         {kiosk.status === 'ACTIVE' ? (
                           <button
-                            onClick={() => handleToggleStatus(kiosk.id, 'SUSPENDED')}
+                            onClick={() => promptToggleStatus(kiosk, 'SUSPENDED')}
                             disabled={actionLoadingId === kiosk.id}
                             className="flex items-center justify-center py-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold active:bg-rose-100 transition"
                           >
@@ -564,7 +613,7 @@ export default function DashboardPage() {
                           </button>
                         ) : (
                           <button
-                            onClick={() => handleToggleStatus(kiosk.id, 'ACTIVE')}
+                            onClick={() => promptToggleStatus(kiosk, 'ACTIVE')}
                             disabled={actionLoadingId === kiosk.id}
                             className="flex items-center justify-center py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold active:bg-emerald-100 transition"
                           >
@@ -721,6 +770,28 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmConfig.isOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        cancelText="Cancel"
+        variant={confirmConfig.variant}
+        iconType={confirmConfig.iconType}
+        isLoading={confirmLoading}
+        onConfirm={async () => {
+          try {
+            setConfirmLoading(true);
+            await confirmConfig.action();
+          } finally {
+            setConfirmLoading(false);
+            setConfirmConfig((prev) => ({ ...prev, isOpen: false }));
+          }
+        }}
+        onCancel={() => setConfirmConfig((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }
