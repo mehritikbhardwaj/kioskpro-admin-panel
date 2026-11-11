@@ -1,6 +1,6 @@
 export type LicenseStatus = 'ACTIVE' | 'EXPIRED' | 'SUSPENDED';
 
-export type PlanType = '1_MONTH' | '3_MONTHS' | '6_MONTHS' | '12_MONTHS' | 'LIFETIME';
+export type PlanType = '1_DAY_TRIAL' | '1_MONTH' | '3_MONTHS' | '6_MONTHS' | '12_MONTHS' | 'LIFETIME';
 
 export interface KioskLicense {
   id: string;
@@ -17,6 +17,7 @@ export interface KioskLicense {
   machineHwid?: string;
   notes?: string;
   lastSeenAt?: string;
+  hasUsedTrial?: boolean;
 }
 
 export interface BroadcastAnnouncement {

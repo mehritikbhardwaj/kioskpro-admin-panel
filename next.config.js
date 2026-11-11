@@ -15,6 +15,20 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/software-download',
+        destination: 'https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro.exe',
+        permanent: false,
+      },
+      {
+        source: '/download',
+        destination: 'https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro.exe',
+        permanent: false,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

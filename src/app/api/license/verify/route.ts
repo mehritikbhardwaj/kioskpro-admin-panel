@@ -72,6 +72,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (isExpired || kiosk.status === 'EXPIRED') {
+      const isTrial = kiosk.plan === '1_DAY_TRIAL';
       return NextResponse.json({
         valid: false,
         status: 'EXPIRED',
@@ -79,7 +80,11 @@ export async function GET(req: NextRequest) {
         operatorName: kiosk.operatorName,
         expiresAt: kiosk.expiresAt,
         daysRemaining: 0,
-        message: `Your KioskPro subscription expired on ${expiresAt.toLocaleDateString('en-IN')}. Please scan UPI QR to renew.`,
+        isTrial,
+        hasUsedTrial: !!kiosk.hasUsedTrial,
+        message: isTrial
+          ? 'Your 1-Day Free Trial has ended. Please scan UPI QR to renew your subscription.'
+          : `Your KioskPro subscription expired on ${expiresAt.toLocaleDateString('en-IN')}. Please scan UPI QR to renew.`,
         supportContact: systemConfig.distributorPhone,
         distributor: systemConfig.distributorName,
         upiId: systemConfig.distributorUpi,
@@ -94,6 +99,8 @@ export async function GET(req: NextRequest) {
       operatorName: kiosk.operatorName,
       location: kiosk.location,
       plan: kiosk.planName,
+      isTrial: kiosk.plan === '1_DAY_TRIAL',
+      hasUsedTrial: !!kiosk.hasUsedTrial,
       issuedAt: kiosk.issuedAt,
       expiresAt: kiosk.expiresAt,
       daysRemaining,

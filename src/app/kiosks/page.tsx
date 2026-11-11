@@ -53,13 +53,16 @@ export default function KiosksPage() {
 
   const promptRenew = (kiosk: KioskLicense, days: number) => {
     const isYear = days >= 365;
+    const isTrial = days === 1;
     setConfirmConfig({
       isOpen: true,
-      title: isYear ? 'Confirm 1-Year Extension' : 'Confirm 30-Day Extension',
-      message: `Are you sure you want to add ${isYear ? '1 Year (365 days)' : '30 days'} extension to CSP ${kiosk.cspCode} (${kiosk.operatorName})? The expiry date will be updated accordingly.`,
-      confirmText: isYear ? 'Yes, Add 1 Year' : 'Yes, Add 30 Days',
-      variant: 'primary',
-      iconType: 'clock',
+      title: isTrial ? 'Confirm 1-Day Trial Grant' : isYear ? 'Confirm 1-Year Extension' : 'Confirm 30-Day Extension',
+      message: isTrial
+        ? `Are you sure you want to grant a 1-Day Free Trial (24 hours access) to CSP ${kiosk.cspCode} (${kiosk.operatorName})? The kiosk will have full active access for 24 hours.`
+        : `Are you sure you want to add ${isYear ? '1 Year (365 days)' : '30 days'} extension to CSP ${kiosk.cspCode} (${kiosk.operatorName})? The expiry date will be updated accordingly.`,
+      confirmText: isTrial ? 'Yes, Grant 1-Day Trial' : isYear ? 'Yes, Add 1 Year' : 'Yes, Add 30 Days',
+      variant: isTrial ? 'success' : 'primary',
+      iconType: isTrial ? 'check' : 'clock',
       action: () => handleRenew(kiosk.id, days),
     });
   };
@@ -303,7 +306,13 @@ export default function KiosksPage() {
                           </td>
 
                           <td className="px-5 py-4">
-                            <div className="font-medium text-slate-800">{kiosk.planName}</div>
+                            {kiosk.plan === '1_DAY_TRIAL' ? (
+                              <div className="inline-flex items-center gap-1 rounded-md bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-800">
+                                🎁 1-Day Trial
+                              </div>
+                            ) : (
+                              <div className="font-medium text-slate-800">{kiosk.planName}</div>
+                            )}
                             <div className="text-[11px] text-teal-600 font-semibold">₹{kiosk.amount}</div>
                           </td>
 
@@ -347,6 +356,15 @@ export default function KiosksPage() {
 
                           <td className="px-5 py-4 text-right">
                             <div className="inline-flex items-center gap-1.5">
+                              {/* Quick +1d Trial */}
+                              <button
+                                onClick={() => promptRenew(kiosk, 1)}
+                                title="Grant 1-Day Free Trial"
+                                className="rounded-lg bg-purple-50 px-2 py-1 text-xs font-semibold text-purple-700 hover:bg-purple-100 transition"
+                              >
+                                +1d Trial
+                              </button>
+
                               {/* Quick +30 Days */}
                               <button
                                 onClick={() => promptRenew(kiosk, 30)}
@@ -471,7 +489,13 @@ export default function KiosksPage() {
 
                       {/* Plan & Expiry */}
                       <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-50">
-                        <span className="font-medium text-slate-700">{kiosk.planName} (₹{kiosk.amount})</span>
+                        {kiosk.plan === '1_DAY_TRIAL' ? (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-800">
+                            🎁 1-Day Trial
+                          </span>
+                        ) : (
+                          <span className="font-medium text-slate-700">{kiosk.planName} (₹{kiosk.amount})</span>
+                        )}
                         <span>
                           {isExpired ? (
                             <span className="text-rose-600 font-semibold">Expired</span>
@@ -493,7 +517,14 @@ export default function KiosksPage() {
                       </div>
 
                       {/* Touch Action Bar */}
-                      <div className="grid grid-cols-4 gap-1.5 pt-1">
+                      <div className="grid grid-cols-5 gap-1 pt-1">
+                        <button
+                          onClick={() => promptRenew(kiosk, 1)}
+                          className="flex items-center justify-center py-1.5 rounded-lg bg-purple-50 border border-purple-200 text-purple-800 text-[11px] font-bold active:bg-purple-100 transition"
+                        >
+                          +1d
+                        </button>
+
                         <button
                           onClick={() => promptRenew(kiosk, 30)}
                           className="flex items-center justify-center py-1.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-800 text-[11px] font-bold active:bg-teal-100 transition"
@@ -505,7 +536,7 @@ export default function KiosksPage() {
                           onClick={() => promptRenew(kiosk, 365)}
                           className="flex items-center justify-center py-1.5 rounded-lg bg-teal-600 text-white text-[11px] font-bold shadow-sm active:bg-teal-700 transition"
                         >
-                          +1 Year
+                          +1y
                         </button>
 
                         {kiosk.status === 'ACTIVE' ? (

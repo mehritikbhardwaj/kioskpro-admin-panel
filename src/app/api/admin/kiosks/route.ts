@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
     }
 
     const planNames: Record<string, string> = {
+      '1_DAY_TRIAL': '1-Day Free Trial (₹0)',
       '1_MONTH': '1 Month Starter (₹199)',
       '3_MONTHS': '3 Months Quarter (₹449)',
       '6_MONTHS': '6 Months Half-Year (₹999)',
@@ -61,6 +62,7 @@ export async function POST(req: NextRequest) {
       'LIFETIME': 'Lifetime Enterprise License',
     };
 
+    const isTrial = plan === '1_DAY_TRIAL';
     const newKiosk = await addKiosk({
       cspCode: cspCode.trim(),
       operatorName: operatorName.trim(),
@@ -68,9 +70,10 @@ export async function POST(req: NextRequest) {
       location: (location || 'India').trim(),
       plan: plan || '12_MONTHS',
       planName: planNames[plan] || '12 Months Enterprise (₹1,799)',
-      amount: Number(amount) || 1799,
-      notes: notes || '',
-      durationMonths: durationMonths ? Number(durationMonths) : undefined,
+      amount: isTrial ? 0 : (Number(amount) || 1799),
+      notes: notes || (isTrial ? '1-Day Trial Issued by Admin' : ''),
+      durationMonths: isTrial ? undefined : (durationMonths ? Number(durationMonths) : undefined),
+      durationDays: isTrial ? 1 : undefined,
     });
 
     return NextResponse.json({ success: true, data: newKiosk });

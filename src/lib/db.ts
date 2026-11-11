@@ -159,13 +159,17 @@ export async function getKioskByCspCode(cspCode: string): Promise<KioskLicense |
   return kiosks.find((k) => k.cspCode.trim().toLowerCase() === clean);
 }
 
-export async function addKiosk(data: Omit<KioskLicense, 'id' | 'issuedAt' | 'expiresAt' | 'status'> & { durationMonths?: number }): Promise<KioskLicense> {
+export async function addKiosk(data: Omit<KioskLicense, 'id' | 'issuedAt' | 'expiresAt' | 'status'> & { durationMonths?: number; durationDays?: number }): Promise<KioskLicense> {
   const kiosks = await getKiosks();
   const now = new Date();
-  const months = data.durationMonths || (data.plan === '1_MONTH' ? 1 : data.plan === '3_MONTHS' ? 3 : data.plan === '6_MONTHS' ? 6 : data.plan === '12_MONTHS' ? 12 : 120);
-  
   const expiry = new Date(now);
-  expiry.setMonth(expiry.getMonth() + months);
+
+  if (data.plan === '1_DAY_TRIAL' || data.durationDays === 1) {
+    expiry.setDate(expiry.getDate() + 1);
+  } else {
+    const months = data.durationMonths || (data.plan === '1_MONTH' ? 1 : data.plan === '3_MONTHS' ? 3 : data.plan === '6_MONTHS' ? 6 : data.plan === '12_MONTHS' ? 12 : 120);
+    expiry.setMonth(expiry.getMonth() + months);
+  }
 
   const newKiosk: KioskLicense = {
     ...data,
@@ -173,12 +177,88 @@ export async function addKiosk(data: Omit<KioskLicense, 'id' | 'issuedAt' | 'exp
     issuedAt: now.toISOString(),
     expiresAt: expiry.toISOString(),
     status: 'ACTIVE',
+    hasUsedTrial: data.plan === '1_DAY_TRIAL' ? true : data.hasUsedTrial,
   };
 
   kiosks.unshift(newKiosk);
   inMemoryKiosks = kiosks;
   await persistData();
   return newKiosk;
+}
+
+export async function grantTrial(
+  cspCode: string,
+  operatorName?: string,
+  mobileNumber?: string,
+  location?: string,
+  hwid?: string
+): Promise<{ success: boolean; message: string; kiosk?: KioskLicense }> {
+  const clean = cspCode.trim().toLowerCase();
+  const kiosks = await getKiosks();
+  const existing = kiosks.find((k) => k.cspCode.trim().toLowerCase() === clean);
+
+  if (existing) {
+    if (existing.hasUsedTrial) {
+      return {
+        success: false,
+        message: `CSP Code '${cspCode}' has already used the 1-Day Free Trial. Please renew your subscription via UPI QR to continue.`,
+      };
+    }
+
+    const now = new Date();
+    const expiry = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    existing.plan = '1_DAY_TRIAL';
+    existing.planName = '1-Day Free Trial (₹0)';
+    existing.amount = 0;
+    existing.issuedAt = now.toISOString();
+    existing.expiresAt = expiry.toISOString();
+    existing.status = 'ACTIVE';
+    existing.hasUsedTrial = true;
+    if (operatorName && (!existing.operatorName || existing.operatorName === 'SBI CSP Operator')) {
+      existing.operatorName = operatorName;
+    }
+    if (mobileNumber && !existing.mobileNumber) existing.mobileNumber = mobileNumber;
+    if (location && !existing.location) existing.location = location;
+    if (hwid) existing.machineHwid = hwid;
+
+    inMemoryKiosks = kiosks;
+    await persistData();
+    return {
+      success: true,
+      message: '1-Day Free Trial activated successfully! Valid for 24 hours.',
+      kiosk: existing,
+    };
+  }
+
+  // Create new trial kiosk record
+  const now = new Date();
+  const expiry = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const newTrial: KioskLicense = {
+    id: `kiosk-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    cspCode: cspCode.trim(),
+    operatorName: operatorName?.trim() || 'SBI CSP Operator',
+    mobileNumber: mobileNumber?.trim() || '',
+    location: location?.trim() || 'India',
+    plan: '1_DAY_TRIAL',
+    planName: '1-Day Free Trial (₹0)',
+    amount: 0,
+    issuedAt: now.toISOString(),
+    expiresAt: expiry.toISOString(),
+    status: 'ACTIVE',
+    hasUsedTrial: true,
+    machineHwid: hwid,
+    notes: '1-Day Trial Activated',
+    lastSeenAt: now.toISOString(),
+  };
+
+  kiosks.unshift(newTrial);
+  inMemoryKiosks = kiosks;
+  await persistData();
+  return {
+    success: true,
+    message: '1-Day Free Trial activated successfully! Valid for 24 hours.',
+    kiosk: newTrial,
+  };
 }
 
 export async function updateKiosk(id: string, updates: Partial<KioskLicense>): Promise<KioskLicense | null> {

@@ -109,6 +109,16 @@ export default function Navbar({ onRefresh, isLoading }: NavbarProps) {
           </button>
 
           <a
+            href="/software-download"
+            target="_blank"
+            rel="noreferrer"
+            className="hidden sm:flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-800 hover:bg-teal-100 transition shadow-sm"
+            title="Download Latest KioskPro.exe"
+          >
+            <span>📥 Download App</span>
+          </a>
+
+          <a
             href="/api/license/verify?csp_code=3A450557"
             target="_blank"
             rel="noreferrer"
@@ -213,6 +223,15 @@ export default function Navbar({ onRefresh, isLoading }: NavbarProps) {
 
             {/* Footer */}
             <div className="pt-4 border-t border-slate-100 mt-auto space-y-2">
+              <a
+                href="/software-download"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-center gap-1.5 w-full rounded-xl bg-teal-600 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-teal-700 transition"
+              >
+                <span>📥 Download KioskPro.exe</span>
+              </a>
+
               <a
                 href="/api/license/verify?csp_code=3A450557"
                 target="_blank"
