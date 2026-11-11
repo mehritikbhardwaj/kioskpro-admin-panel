@@ -128,12 +128,13 @@ export default function KiosksPage() {
     const matchesSearch =
       k.cspCode.toLowerCase().includes(q) ||
       k.operatorName.toLowerCase().includes(q) ||
-      k.mobileNumber.toLowerCase().includes(q) ||
-      k.location.toLowerCase().includes(q);
+      (k.mobileNumber && k.mobileNumber.toLowerCase().includes(q)) ||
+      (k.location && k.location.toLowerCase().includes(q));
 
     if (!matchesSearch) return false;
-    if (statusFilter !== 'ALL' && k.status !== statusFilter) return false;
-    return true;
+
+    if (statusFilter === 'ALL') return true;
+    return k.status === statusFilter;
   });
 
   return (
@@ -143,20 +144,20 @@ export default function KiosksPage() {
       <div className="flex flex-1">
         <Sidebar />
 
-        <main className="flex-1 p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <main className="flex-1 p-3.5 sm:p-6 md:p-8 max-w-7xl mx-auto w-full space-y-4 sm:space-y-6 pb-24 md:pb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
                 All Kiosks &amp; Subscriptions
               </h1>
-              <p className="text-sm text-slate-500">
+              <p className="text-xs sm:text-sm text-slate-500">
                 Detailed record of all SBI KioskPro installations and cloud licenses.
               </p>
             </div>
           </div>
 
-          {/* Filters & Search */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          {/* Filters & Search (Mobile Scrollable) */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-sm">
             <div className="relative w-full sm:w-80">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
               <input
@@ -168,15 +169,15 @@ export default function KiosksPage() {
               />
             </div>
 
-            <div className="flex items-center gap-1.5 w-full sm:w-auto">
-              <span className="text-xs font-semibold text-slate-400 mr-1">Status:</span>
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+              <span className="text-xs font-semibold text-slate-400 mr-1 shrink-0">Filter:</span>
               {(['ALL', 'ACTIVE', 'EXPIRED', 'SUSPENDED'] as const).map((st) => (
                 <button
                   key={st}
                   onClick={() => setStatusFilter(st)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                  className={`rounded-lg px-2.5 sm:px-3 py-1.5 text-xs font-semibold shrink-0 transition ${
                     statusFilter === st
-                      ? 'bg-teal-600 text-white'
+                      ? 'bg-teal-600 text-white shadow-sm'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
@@ -186,9 +187,10 @@ export default function KiosksPage() {
             </div>
           </div>
 
-          {/* Kiosks Table */}
+          {/* Kiosks Container */}
           <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
+            {/* DESKTOP TABLE VIEW */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200">
                   <tr>
@@ -313,7 +315,7 @@ export default function KiosksPage() {
                                     actionLoadingId === kiosk.id ? 'opacity-60 cursor-wait' : ''
                                   }`}
                                 >
-                                  {actionLoadingId === kiosk.id ? 'Blocking...' : 'Block'}
+                                  {actionLoadingId === kiosk.id ? '...' : 'Block'}
                                 </button>
                               ) : (
                                 <button
@@ -324,26 +326,16 @@ export default function KiosksPage() {
                                     actionLoadingId === kiosk.id ? 'opacity-60 cursor-wait' : ''
                                   }`}
                                 >
-                                  {actionLoadingId === kiosk.id ? 'Activating...' : 'Activate'}
+                                  {actionLoadingId === kiosk.id ? '...' : 'Activate'}
                                 </button>
                               )}
-
-                              {/* View JSON verify link */}
-                              <a
-                                href={`/api/license/verify?csp_code=${kiosk.cspCode}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                title="Inspect Live API JSON"
-                                className="rounded-lg border border-slate-200 p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition"
-                              >
-                                <ExternalLink className="h-3.5 w-3.5" />
-                              </a>
 
                               {/* Delete */}
                               <button
                                 onClick={() => handleDelete(kiosk.id, kiosk.operatorName)}
-                                title="Delete Kiosk"
-                                className="rounded-lg p-1 text-slate-300 hover:text-rose-600 transition"
+                                disabled={actionLoadingId === kiosk.id}
+                                title="Delete Kiosk License"
+                                className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
@@ -355,6 +347,137 @@ export default function KiosksPage() {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* MOBILE CARD VIEW */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {loading ? (
+                <div className="text-center py-8 text-xs text-slate-400">Loading licenses...</div>
+              ) : filteredKiosks.length === 0 ? (
+                <div className="text-center py-8 text-xs text-slate-400">No kiosks found.</div>
+              ) : (
+                filteredKiosks.map((kiosk) => {
+                  const exp = new Date(kiosk.expiresAt);
+                  const isExpired = exp < new Date();
+                  const daysLeft = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                  return (
+                    <div key={kiosk.id} className="p-4 space-y-2.5 hover:bg-slate-50 transition">
+                      {/* Top: CSP + Status */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="font-mono font-bold text-teal-700 text-sm">
+                            {kiosk.cspCode}
+                          </span>
+                          <span className="text-[11px] text-slate-400 ml-1.5">
+                            ({kiosk.location || 'India'})
+                          </span>
+                        </div>
+
+                        <div>
+                          {kiosk.status === 'ACTIVE' && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                              <CheckCircle2 className="h-3 w-3" />
+                              ACTIVE
+                            </span>
+                          )}
+                          {kiosk.status === 'EXPIRED' && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                              <Clock className="h-3 w-3" />
+                              EXPIRED
+                            </span>
+                          )}
+                          {kiosk.status === 'SUSPENDED' && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-800">
+                              <XCircle className="h-3 w-3" />
+                              SUSPENDED
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Middle: Operator & Phone */}
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="font-semibold text-slate-900">{kiosk.operatorName}</div>
+                        {kiosk.mobileNumber && (
+                          <a
+                            href={`tel:${kiosk.mobileNumber}`}
+                            className="flex items-center gap-1 text-[11px] text-teal-600 font-semibold bg-teal-50 px-2 py-0.5 rounded-lg border border-teal-100"
+                          >
+                            <Phone className="h-3 w-3" />
+                            <span>{kiosk.mobileNumber}</span>
+                          </a>
+                        )}
+                      </div>
+
+                      {/* Plan & Expiry */}
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-50">
+                        <span className="font-medium text-slate-700">{kiosk.planName} (₹{kiosk.amount})</span>
+                        <span>
+                          {isExpired ? (
+                            <span className="text-rose-600 font-semibold">Expired</span>
+                          ) : (
+                            <span>{daysLeft} days left</span>
+                          )}
+                        </span>
+                      </div>
+
+                      {/* Last Seen */}
+                      <div className="text-[10px] text-slate-400">
+                        Last Active:{' '}
+                        {kiosk.lastSeenAt
+                          ? new Date(kiosk.lastSeenAt).toLocaleString('en-IN', {
+                              dateStyle: 'short',
+                              timeStyle: 'short',
+                            })
+                          : 'Never'}
+                      </div>
+
+                      {/* Touch Action Bar */}
+                      <div className="grid grid-cols-4 gap-1.5 pt-1">
+                        <button
+                          onClick={() => handleRenew(kiosk.id, 30)}
+                          className="flex items-center justify-center py-1.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-800 text-[11px] font-bold active:bg-teal-100 transition"
+                        >
+                          +30d
+                        </button>
+
+                        <button
+                          onClick={() => handleRenew(kiosk.id, 365)}
+                          className="flex items-center justify-center py-1.5 rounded-lg bg-teal-600 text-white text-[11px] font-bold shadow-sm active:bg-teal-700 transition"
+                        >
+                          +1 Year
+                        </button>
+
+                        {kiosk.status === 'ACTIVE' ? (
+                          <button
+                            onClick={() => handleToggleStatus(kiosk.id, 'SUSPENDED')}
+                            disabled={actionLoadingId === kiosk.id}
+                            className="flex items-center justify-center py-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold active:bg-rose-100 transition"
+                          >
+                            {actionLoadingId === kiosk.id ? '...' : 'Block'}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleToggleStatus(kiosk.id, 'ACTIVE')}
+                            disabled={actionLoadingId === kiosk.id}
+                            className="flex items-center justify-center py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold active:bg-emerald-100 transition"
+                          >
+                            {actionLoadingId === kiosk.id ? '...' : 'Activate'}
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => handleDelete(kiosk.id, kiosk.operatorName)}
+                          disabled={actionLoadingId === kiosk.id}
+                          className="flex items-center justify-center py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700 active:bg-rose-200 transition"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </main>
