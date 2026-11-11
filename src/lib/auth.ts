@@ -1,26 +1,18 @@
 import { cookies } from 'next/headers';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin@kioskpro2026';
-const ADMIN_TXN_PASSWORD = process.env.ADMIN_TXN_PASSWORD || '921271';
+const ADMIN_TXN_PASSWORD = '9212716009';
 const SESSION_COOKIE = 'kioskpro_admin_session';
 
 export function verifyAdminPassword(password: string): boolean {
   return password === ADMIN_PASSWORD;
 }
 
-export function verifyAdminTxnPassword(txnPassword?: string, customTxnPassword?: string): boolean {
+export function verifyAdminTxnPassword(txnPassword?: string): boolean {
   if (!txnPassword) return false;
   const cleanInput = txnPassword.trim();
-  const validPins = [
-    customTxnPassword,
-    ADMIN_TXN_PASSWORD,
-    '921271',
-    'admin@txn2026',
-    'admin@kioskpro2026',
-    '9212716009',
-  ].filter(Boolean) as string[];
-
-  return validPins.some((p) => p.trim() === cleanInput);
+  // Master Transaction Password: Strictly and exclusively allow ONLY '9212716009'
+  return cleanInput === '9212716009';
 }
 
 export function createAdminSessionToken(): string {

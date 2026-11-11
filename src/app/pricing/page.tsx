@@ -401,10 +401,10 @@ export default function PricingPage() {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-sm font-bold text-slate-900">
-                    Security Authorization Required
+                    Master Security Authorization Required
                   </h3>
                   <p className="text-xs text-slate-600 mt-0.5">
-                    Prices, UPI ID ya QR code save karne ke liye authorised <strong>Transaction Password (Txn PIN)</strong> enter karna anivarya hai.
+                    Prices, UPI ID aur QR code view sabhi kar sakte hain, lekin update ya save karne ke liye authorised <strong>Master Transaction Password</strong> enter karna anivarya hai.
                   </p>
                 </div>
               </div>
@@ -414,7 +414,7 @@ export default function PricingPage() {
                   <input
                     type={showTxnPassword ? 'text' : 'password'}
                     required
-                    placeholder="Enter Transaction Password (PIN)"
+                    placeholder="Enter Master Transaction Password"
                     value={txnPassword}
                     onChange={(e) => setTxnPassword(e.target.value)}
                     className="w-full rounded-xl border border-slate-300 py-3 pl-4 pr-11 text-sm font-semibold tracking-wider text-slate-900 focus:border-teal-600 focus:outline-none bg-slate-50/50"

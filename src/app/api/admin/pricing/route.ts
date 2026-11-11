@@ -27,12 +27,12 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { txnPassword, distributorName, distributorPhone, distributorUpi, qrCodeUrl, plans } = body;
 
-    // MANDATORY TRANSACTION PASSWORD VERIFICATION
+    // MANDATORY MASTER TRANSACTION PASSWORD VERIFICATION (ONLY '9212716009' ALLOWED)
     if (!txnPassword || !verifyAdminTxnPassword(txnPassword)) {
       return NextResponse.json(
         { 
           success: false, 
-          message: 'Invalid Transaction Password! Transaction password galat hai. Prices, UPI ya QR change karne ke liye sahi Transaction Password enter karein.' 
+          message: 'Invalid Transaction Password! Transaction password galat hai. Pricing, UPI ya QR update karne ke liye Master Transaction Password enter karein.' 
         }, 
         { status: 403 }
       );
