@@ -32,8 +32,8 @@ const SYSTEM_CONFIG: SystemConfig = {
   distributorName: 'Hritik Bhardwaj',
   distributorPhone: '9212716009',
   distributorUpi: '9212716009@yescred',
-  minRequiredVersion: '2.0.6',
-  latestVersion: '2.0.6'
+  minRequiredVersion: '2.0.8',
+  latestVersion: '2.0.8'
 };
 
 function getRedisClient(): Redis | null {
