@@ -241,7 +241,7 @@ export async function addKiosk(data: Omit<KioskLicense, 'id' | 'issuedAt' | 'exp
     issuedAt: now.toISOString(),
     expiresAt: expiry.toISOString(),
     status: 'ACTIVE',
-    hasUsedTrial: data.plan === '1_DAY_TRIAL' ? true : data.hasUsedTrial,
+    hasUsedTrial: true,
   };
 
   kiosks.unshift(newKiosk);
@@ -262,14 +262,25 @@ export async function grantTrial(
   const existing = kiosks.find((k) => k.cspCode.trim().toLowerCase() === clean);
 
   if (existing) {
-    if (existing.hasUsedTrial) {
+    const now = new Date();
+    const isCurrentlyActive = existing.status === 'ACTIVE' && new Date(existing.expiresAt) > now;
+
+    // Rule 1: Jisne subscription leliya use trial mat do
+    if (isCurrentlyActive && existing.plan !== '1_DAY_TRIAL') {
       return {
         success: false,
-        message: `CSP Code '${cspCode}' has already used the 1-Day Free Trial. Please renew your subscription via UPI QR to continue.`,
+        message: `Aapka KioskPro subscription pehle se active hai (${existing.planName}). 1-Day Trial lene ki zaroorat nahi hai.`,
       };
     }
 
-    const now = new Date();
+    // Rule 2: Jisne ek baar trial leliya wo doosri baar nahi le sakta
+    if (existing.hasUsedTrial) {
+      return {
+        success: false,
+        message: `CSP Code '${cspCode}' pehle hi 1-Day Free Trial use kar chuka hai. Ek device/CSP code par trial sirf ek baar milta hai. Kripya subscription renew karein.`,
+      };
+    }
+
     const expiry = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     existing.plan = '1_DAY_TRIAL';
     existing.planName = '1-Day Free Trial (₹0)';
@@ -356,6 +367,7 @@ export async function renewKiosk(id: string, days: number): Promise<KioskLicense
     ...current,
     expiresAt: newExpiry.toISOString(),
     status: 'ACTIVE',
+    hasUsedTrial: true,
   };
 
   inMemoryKiosks = kiosks;

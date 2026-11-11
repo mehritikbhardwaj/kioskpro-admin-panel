@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
         expiresAt: kiosk.expiresAt,
         daysRemaining: 0,
         isTrial,
-        hasUsedTrial: !!kiosk.hasUsedTrial,
+        hasUsedTrial: true, // If expired, user has either used trial or paid sub, so trial is never available
         message: isTrial
           ? 'Your 1-Day Free Trial has ended. Please scan UPI QR to renew your subscription.'
           : `Your KioskPro subscription expired on ${expiresAt.toLocaleDateString('en-IN')}. Please scan UPI QR to renew.`,
@@ -100,6 +100,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Active License
+    const isSubscribed = kiosk.status === 'ACTIVE' && kiosk.plan !== '1_DAY_TRIAL';
     return NextResponse.json({
       valid: true,
       status: 'ACTIVE',
@@ -108,7 +109,8 @@ export async function GET(req: NextRequest) {
       location: kiosk.location,
       plan: kiosk.planName,
       isTrial: kiosk.plan === '1_DAY_TRIAL',
-      hasUsedTrial: !!kiosk.hasUsedTrial,
+      isSubscribed,
+      hasUsedTrial: !!kiosk.hasUsedTrial || isSubscribed,
       issuedAt: kiosk.issuedAt,
       expiresAt: kiosk.expiresAt,
       daysRemaining,
