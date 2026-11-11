@@ -4,10 +4,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const rules = {
-    version: '2.0.8',
-    latestAppVersion: '2.0.8',
-    appDownloadUrl: 'https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro.exe',
-    releaseNotes: 'KioskPro v2.0.8 - Enhanced Agent Login Biometric Auto-Capture (touch the finger print sensor), Pointer & Mouse Event sequence dispatch, and zero-click sensor activation.',
+    version: '2.0.9',
+    latestAppVersion: '2.0.9',
+    appDownloadUrl: 'https://kioskpro-admin-panel.vercel.app/software-download',
+    releaseNotes: 'KioskPro v2.0.9 - Sleek Dashboard UI with Subscription Days Remaining Linear Progress Bar & Plans Shortcut, 1-Day Free Trial Engine, and Branded Download Endpoint.',
     selectors: {
       gps_connect: "button:contains('CONNECT'), input[value*='CONNECT']",
       gps_get_location: "button:contains('GET LOCATION'), input[value*='GET LOCATION']",
