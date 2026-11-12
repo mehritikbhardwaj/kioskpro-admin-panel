@@ -1,9 +1,9 @@
 {
-  "version": "2.2.0",
-  "latestAppVersion": "2.2.0",
-  "appDownloadUrl": "https://kioskpro-admin-panel.vercel.app/download",
+  "version": "2.2.1",
+  "latestAppVersion": "2.2.1",
+  "appDownloadUrl": "https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro.exe",
   "patchDownloadUrl": "https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro_Patch.zip",
-  "releaseNotes": "KioskPro v2.2.0 - Fix OTP popup duplicate/reopening loop, eliminate double Send Verification Code SMS, auto-advance Confirm Details screen, and instant Transaction Password auto-fill.",
+  "releaseNotes": "KioskPro v2.2.1 - Fix auto-updater restart loop with NTFS safe-rename & WebView2 process tree termination, resolve Balance Enquiry Account tab navigation, dedicated Loan Deposit shortcuts (Enter+L / Enter++), fix Loan Deposit Send Verification Code & Password auto-fill, and eliminate accidental Card tab switching.",
   "selectors": {
     "gps_connect": "button:contains('CONNECT'), input[value*='CONNECT']",
     "gps_get_location": "button:contains('GET LOCATION'), input[value*='GET LOCATION']",

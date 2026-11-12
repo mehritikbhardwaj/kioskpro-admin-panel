@@ -18,7 +18,7 @@ const INITIAL_KIOSKS: KioskLicense[] = [
     status: 'ACTIVE',
     notes: 'Primary Master Kiosk - 12 Months Subscribed',
     lastSeenAt: new Date().toISOString(),
-    appVersion: '2.2.0',
+    appVersion: '2.2.1',
   }
 ];
 
@@ -104,7 +104,7 @@ export const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
   distributorUpi: '9212716009@yescred',
   qrCodeUrl: '/qr_code.jpg',
   minRequiredVersion: '2.1.5',
-  latestVersion: '2.2.0',
+  latestVersion: '2.2.1',
   plans: DEFAULT_PLANS,
 };
 
