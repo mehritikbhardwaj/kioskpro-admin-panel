@@ -1065,7 +1065,7 @@ export default function TransactionsPage() {
                       <td className="px-4 py-3">
                         <div className="font-bold text-slate-900">{selectedTxnForReceipt.planName}</div>
                         <div className="text-[11px] text-slate-500 mt-0.5">
-                          SBI Kiosk Single-Click Automation, Rule Sync v2.1.0, Auto-Updates Included
+                          SBI Kiosk Single-Click Automation, Rule Sync v2.1.1, Auto-Updates Included
                         </div>
                       </td>
                       <td className="px-4 py-3 text-center font-semibold text-slate-700">

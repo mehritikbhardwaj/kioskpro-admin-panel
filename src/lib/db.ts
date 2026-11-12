@@ -102,8 +102,8 @@ export const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
   distributorPhone: '9212716009',
   distributorUpi: '9212716009@yescred',
   qrCodeUrl: '/qr_code.jpg',
-  minRequiredVersion: '2.1.0',
-  latestVersion: '2.1.0',
+  minRequiredVersion: '2.1.1',
+  latestVersion: '2.1.1',
   plans: DEFAULT_PLANS,
 };
 
