@@ -4,11 +4,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const rules = {
-    version: '2.1.4',
-    latestAppVersion: '2.1.4',
+    version: '2.1.5',
+    latestAppVersion: '2.1.5',
     appDownloadUrl: 'https://kioskpro-admin-panel.vercel.app/software-download',
     patchDownloadUrl: 'https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro_Patch.zip',
-    releaseNotes: 'KioskPro v2.1.4 - Fixed AEPS Fingerprint auto-selection & instant Proceed, Passbook Barcode serial mapping, multi-mode OTP Verification popup with 60s countdown timer.',
+    releaseNotes: 'KioskPro v2.1.5 - Optimized Full Hotkeys Flow (Enter+0..9 hold & sequential press, F1..F12 audit, Repeat Txn alignment, and keyboard modal navigation).',
     selectors: {
       gps_connect: "button:contains('CONNECT'), input[value*='CONNECT']",
       gps_get_location: "button:contains('GET LOCATION'), input[value*='GET LOCATION']",
