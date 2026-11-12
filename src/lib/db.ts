@@ -249,7 +249,7 @@ export async function getKioskByCspCode(cspCode: string): Promise<KioskLicense |
   return kiosks.find((k) => k.cspCode.trim().toLowerCase() === clean);
 }
 
-export async function addKiosk(data: Omit<KioskLicense, 'id' | 'issuedAt' | 'expiresAt' | 'status'> & { durationMonths?: number; durationDays?: number }): Promise<KioskLicense> {
+export async function addKiosk(data: Omit<KioskLicense, 'id' | 'issuedAt' | 'expiresAt' | 'status'> & { durationMonths?: number; durationDays?: number; utrNumber?: string; paymentMethod?: PaymentMethodType }): Promise<KioskLicense> {
   const kiosks = await getKiosks();
   const now = new Date();
   const expiry = new Date(now);
@@ -288,7 +288,8 @@ export async function addKiosk(data: Omit<KioskLicense, 'id' | 'issuedAt' | 'exp
       planName: newKiosk.planName,
       amount: newKiosk.amount,
       durationDays,
-      paymentMethod: newKiosk.plan === '1_DAY_TRIAL' ? 'FREE_TRIAL' : 'UPI',
+      paymentMethod: data.paymentMethod || (newKiosk.plan === '1_DAY_TRIAL' ? 'FREE_TRIAL' : 'UPI'),
+      utrNumber: data.utrNumber ? String(data.utrNumber).trim() : undefined,
       notes: newKiosk.notes || 'New Kiosk Registration',
       status: 'COMPLETED',
     });

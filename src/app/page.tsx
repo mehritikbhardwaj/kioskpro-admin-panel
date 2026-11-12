@@ -50,8 +50,12 @@ export default function DashboardPage() {
   const [formPlan, setFormPlan] = useState('12_MONTHS');
   const [formDuration, setFormDuration] = useState('12');
   const [formAmount, setFormAmount] = useState('1799');
+  const [formUtr, setFormUtr] = useState('');
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  // Quick renewal state
+  const [renewUtr, setRenewUtr] = useState('');
 
   // CSP Autocomplete in Issue Modal
   const [showCspSuggestions, setShowCspSuggestions] = useState(false);
@@ -66,6 +70,9 @@ export default function DashboardPage() {
     confirmText: string;
     variant: 'danger' | 'warning' | 'primary' | 'success';
     iconType: 'alert' | 'block' | 'clock' | 'logout' | 'check';
+    inputLabel?: string;
+    inputPlaceholder?: string;
+    inputRequired?: boolean;
     action: () => Promise<void> | void;
   }>({
     isOpen: false,
@@ -81,15 +88,19 @@ export default function DashboardPage() {
   const promptRenew = (kiosk: KioskLicense, days: number) => {
     const isYear = days >= 365;
     const isTrial = days === 1;
+    setRenewUtr('');
     setConfirmConfig({
       isOpen: true,
       title: isTrial ? 'Confirm 1-Day Trial Grant' : isYear ? 'Confirm 1-Year Extension' : 'Confirm 30-Day Extension',
       message: isTrial
         ? `Are you sure you want to grant a 1-Day Free Trial (24 hours access) to CSP ${kiosk.cspCode} (${kiosk.operatorName})? The kiosk will have full active access for 24 hours.`
-        : `Are you sure you want to add ${isYear ? '1 Year (365 days)' : '30 days'} extension to CSP ${kiosk.cspCode} (${kiosk.operatorName})? The expiry date will be updated accordingly.`,
+        : `Please enter the payment Transaction ID (UTR / Reference Number) to add ${isYear ? '1 Year (365 days)' : '30 days'} extension to CSP ${kiosk.cspCode} (${kiosk.operatorName}).`,
       confirmText: isTrial ? 'Yes, Grant 1-Day Trial' : isYear ? 'Yes, Add 1 Year' : 'Yes, Add 30 Days',
       variant: isTrial ? 'success' : 'primary',
       iconType: isTrial ? 'check' : 'clock',
+      inputLabel: isTrial ? undefined : 'Transaction ID / UTR Number',
+      inputPlaceholder: isTrial ? undefined : 'e.g. 431289128019 or UPI Reference',
+      inputRequired: !isTrial,
       action: () => handleRenew(kiosk.id, days),
     });
   };
@@ -140,17 +151,29 @@ export default function DashboardPage() {
   }, []);
 
   const handleRenew = async (id: string, days: number) => {
+    const isTrial = days === 1;
+    if (!isTrial && !renewUtr.trim()) {
+      alert('Transaction ID (UTR / Reference Number) is required to extend license.');
+      return;
+    }
     setActionLoadingId(id);
     try {
       const res = await fetch('/api/admin/kiosks', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, action: 'RENEW', days }),
+        body: JSON.stringify({ 
+          id, 
+          action: 'RENEW', 
+          days,
+          utrNumber: isTrial ? 'FREE_TRIAL' : renewUtr.trim(),
+          paymentMethod: isTrial ? 'FREE_TRIAL' : 'UPI',
+        }),
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
         alert(json.message || 'Error renewing kiosk license');
       } else {
+        setRenewUtr('');
         await fetchData();
       }
     } catch (err: any) {
@@ -227,6 +250,12 @@ export default function DashboardPage() {
       return;
     }
 
+    const isTrial = formPlan === '1_DAY_TRIAL';
+    if (!isTrial && !formUtr.trim()) {
+      alert('Transaction ID (UTR / Reference Number) is required to issue a license.');
+      return;
+    }
+
     setFormSubmitting(true);
     try {
       const res = await fetch('/api/admin/kiosks', {
@@ -240,6 +269,8 @@ export default function DashboardPage() {
           plan: formPlan,
           durationMonths: formDuration,
           amount: formAmount,
+          utrNumber: isTrial ? 'FREE_TRIAL' : formUtr.trim(),
+          paymentMethod: isTrial ? 'FREE_TRIAL' : 'UPI',
         }),
       });
 
@@ -251,6 +282,7 @@ export default function DashboardPage() {
         setFormCsp('');
         setFormName('');
         setFormPhone('');
+        setFormUtr('');
         await fetchData();
       }
     } catch (err: any) {
@@ -876,6 +908,20 @@ export default function DashboardPage() {
                 </div>
               </div>
 
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Transaction ID / UTR {formPlan !== '1_DAY_TRIAL' && <span className="text-rose-500">*</span>}
+                </label>
+                <input
+                  type="text"
+                  required={formPlan !== '1_DAY_TRIAL'}
+                  placeholder={formPlan === '1_DAY_TRIAL' ? 'Not required for Free Trial' : 'e.g. 431289128019 or UPI Reference'}
+                  value={formUtr}
+                  onChange={(e) => setFormUtr(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 p-2.5 text-sm font-mono text-slate-900 font-bold focus:border-teal-500 focus:outline-none"
+                />
+              </div>
+
               <div className="flex items-center justify-end gap-2 pt-3.5 sm:pt-4 border-t border-slate-100">
                 <button
                   type="button"
@@ -907,6 +953,11 @@ export default function DashboardPage() {
         variant={confirmConfig.variant}
         iconType={confirmConfig.iconType}
         isLoading={confirmLoading}
+        inputLabel={confirmConfig.inputLabel}
+        inputPlaceholder={confirmConfig.inputPlaceholder}
+        inputRequired={confirmConfig.inputRequired}
+        inputValue={renewUtr}
+        onInputChange={setRenewUtr}
         onConfirm={async () => {
           try {
             setConfirmLoading(true);
@@ -916,7 +967,10 @@ export default function DashboardPage() {
             setConfirmConfig((prev) => ({ ...prev, isOpen: false }));
           }
         }}
-        onCancel={() => setConfirmConfig((prev) => ({ ...prev, isOpen: false }))}
+        onCancel={() => {
+          setRenewUtr('');
+          setConfirmConfig((prev) => ({ ...prev, isOpen: false }));
+        }}
       />
     </div>
   );

@@ -12,6 +12,11 @@ export interface ConfirmModalProps {
   variant?: 'danger' | 'warning' | 'primary' | 'success';
   iconType?: 'alert' | 'block' | 'clock' | 'logout' | 'check';
   isLoading?: boolean;
+  inputLabel?: string;
+  inputValue?: string;
+  inputPlaceholder?: string;
+  onInputChange?: (value: string) => void;
+  inputRequired?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -25,6 +30,11 @@ export default function ConfirmModal({
   variant = 'primary',
   iconType = 'alert',
   isLoading = false,
+  inputLabel,
+  inputValue,
+  inputPlaceholder,
+  onInputChange,
+  inputRequired = false,
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
@@ -106,6 +116,23 @@ export default function ConfirmModal({
           {message}
         </div>
 
+        {inputLabel && (
+          <div className="pt-1">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              {inputLabel} {inputRequired && <span className="text-rose-500">*</span>}
+            </label>
+            <input
+              type="text"
+              required={inputRequired}
+              placeholder={inputPlaceholder}
+              value={inputValue || ''}
+              onChange={(e) => onInputChange?.(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl font-mono text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 shadow-inner"
+              autoFocus
+            />
+          </div>
+        )}
+
         <div className="flex items-center justify-end gap-2.5 pt-1">
           <button
             type="button"
@@ -118,8 +145,8 @@ export default function ConfirmModal({
           <button
             type="button"
             onClick={onConfirm}
-            disabled={isLoading}
-            className={`rounded-xl px-4 py-2 text-xs font-bold shadow-md transition disabled:opacity-50 ${styles.confirmBtn}`}
+            disabled={isLoading || (inputRequired && !inputValue?.trim())}
+            className={`rounded-xl px-4 py-2 text-xs font-bold shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed ${styles.confirmBtn}`}
           >
             {isLoading ? 'Processing...' : confirmText}
           </button>

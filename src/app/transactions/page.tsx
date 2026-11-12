@@ -89,11 +89,21 @@ export default function TransactionsPage() {
       const txnData = await txnRes.json();
       const kioskData = await kioskRes.json();
 
-      if (txnData.success && Array.isArray(txnData.transactions)) {
-        setTransactions(txnData.transactions);
+      if (txnData.success) {
+        const txnList = Array.isArray(txnData.transactions)
+          ? txnData.transactions
+          : Array.isArray(txnData.data)
+          ? txnData.data
+          : [];
+        setTransactions(txnList);
       }
-      if (kioskData.success && Array.isArray(kioskData.kiosks)) {
-        setKiosks(kioskData.kiosks);
+      if (kioskData.success) {
+        const kioskList = Array.isArray(kioskData.data)
+          ? kioskData.data
+          : Array.isArray(kioskData.kiosks)
+          ? kioskData.kiosks
+          : [];
+        setKiosks(kioskList);
       }
     } catch (err) {
       console.error('Failed to load transactions:', err);
@@ -270,6 +280,12 @@ export default function TransactionsPage() {
       return;
     }
 
+    const isTrial = formMethod === 'FREE_TRIAL' || formPlan === '1_DAY_TRIAL';
+    if (!isTrial && !formUtr.trim()) {
+      alert('Transaction ID (UTR / Reference Number) is required.');
+      return;
+    }
+
     try {
       setFormSubmitting(true);
       const res = await fetch('/api/admin/transactions', {
@@ -284,7 +300,7 @@ export default function TransactionsPage() {
           amount: Number(formAmount) || 0,
           durationDays: Number(formDays) || 30,
           paymentMethod: formMethod,
-          utrNumber: formUtr.trim() || undefined,
+          utrNumber: isTrial ? 'FREE_TRIAL' : formUtr.trim(),
           notes: formNotes.trim() || undefined,
           autoRenewKiosk: formAutoRenew,
         }),
@@ -1068,14 +1084,15 @@ export default function TransactionsPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                    UTR / Reference Number
+                    UTR / Transaction ID {formMethod !== 'FREE_TRIAL' && formPlan !== '1_DAY_TRIAL' && <span className="text-rose-500">*</span>}
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. 431289128019"
+                    required={formMethod !== 'FREE_TRIAL' && formPlan !== '1_DAY_TRIAL'}
+                    placeholder={formMethod === 'FREE_TRIAL' || formPlan === '1_DAY_TRIAL' ? 'Not required for Free Trial' : 'e.g. 431289128019 or UPI Ref'}
                     value={formUtr}
                     onChange={(e) => setFormUtr(e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl font-mono text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 shadow-inner"
                   />
                 </div>
               </div>

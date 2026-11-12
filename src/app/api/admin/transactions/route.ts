@@ -31,6 +31,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'CSP Code is required' }, { status: 400 });
     }
 
+    const isTrial = paymentMethod === 'FREE_TRIAL' || plan === '1_DAY_TRIAL';
+    if (!isTrial && (!utrNumber || !String(utrNumber).trim())) {
+      return NextResponse.json({ success: false, message: 'Transaction ID (UTR / Reference Number) is required' }, { status: 400 });
+    }
+
     const cleanCsp = cspCode.trim();
     const kiosks = await getKiosks();
     const kiosk = kiosks.find((k) => k.cspCode.toLowerCase() === cleanCsp.toLowerCase());
