@@ -4,11 +4,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const rules = {
-    version: '2.1.2',
-    latestAppVersion: '2.1.2',
+    version: '2.1.3',
+    latestAppVersion: '2.1.3',
     appDownloadUrl: 'https://kioskpro-admin-panel.vercel.app/software-download',
     patchDownloadUrl: 'https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro_Patch.zip',
-    releaseNotes: 'KioskPro v2.1.2 - Added Mandatory Mobile & WhatsApp Number Capture, Smart Biometric Auto-Retry Engine, 1-Keystroke Modal Pre-population, Digitally Signed Standalone Build.',
+    releaseNotes: 'KioskPro v2.1.3 - Fixed Passbook Barcode Mapping selection, added Floating OTP Verification window with 60s countdown timer & resend trigger, end-to-end Money Transfer, Loan & AEPS OTP automation.',
     selectors: {
       gps_connect: "button:contains('CONNECT'), input[value*='CONNECT']",
       gps_get_location: "button:contains('GET LOCATION'), input[value*='GET LOCATION']",
