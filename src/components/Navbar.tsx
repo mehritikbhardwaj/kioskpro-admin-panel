@@ -16,7 +16,9 @@ import {
   QrCode,
   CreditCard,
   Receipt,
-  Phone
+  Phone,
+  Copy,
+  Check
 } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
 
@@ -32,6 +34,15 @@ export default function Navbar({ onRefresh, isLoading }: NavbarProps) {
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const handleCopyDownloadLink = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://kioskpro-admin-panel.vercel.app';
+    const link = `${origin}/download`;
+    navigator.clipboard.writeText(link);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
+  };
 
   const handleConfirmLogout = async () => {
     try {
@@ -112,15 +123,28 @@ export default function Navbar({ onRefresh, isLoading }: NavbarProps) {
             <span className="hidden xs:inline">QR</span>
           </button>
 
-          <a
-            href="/software-download"
-            target="_blank"
-            rel="noreferrer"
-            className="hidden sm:flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-800 hover:bg-teal-100 transition shadow-sm"
-            title="Download Latest KioskPro.exe"
+          <button
+            type="button"
+            onClick={handleCopyDownloadLink}
+            className={`hidden sm:flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition shadow-sm ${
+              copiedLink
+                ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+                : 'border-teal-200 bg-teal-50 text-teal-800 hover:bg-teal-100'
+            }`}
+            title="Copy App Download Link to share with CSPs"
           >
-            <span>📥 Download App</span>
-          </a>
+            {copiedLink ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-emerald-600" />
+                <span>Link Copied!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="h-3.5 w-3.5 text-teal-600" />
+                <span>Copy App Link</span>
+              </>
+            )}
+          </button>
 
           <a
             href="/api/license/verify?csp_code=3A450557"
@@ -202,39 +226,29 @@ export default function Navbar({ onRefresh, isLoading }: NavbarProps) {
               })}
             </div>
 
-            {/* Distributor Info & UPI QR */}
-            <div className="my-auto pt-2">
-              <div className="rounded-xl border border-teal-100 bg-teal-50/60 p-3.5 text-xs text-slate-700 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-teal-900">
-                  <QrCode className="h-4 w-4 text-teal-600" />
-                  <span>Billing UPI QR</span>
-                </div>
-                <div className="flex justify-center p-2 bg-white rounded-lg border border-teal-200 shadow-sm">
-                  <img src="/qr_code.jpg" alt="UPI QR Code" className="w-28 h-28 object-contain rounded" />
-                </div>
-                <div className="font-mono bg-white rounded p-1.5 border border-teal-200 text-teal-950 text-center select-all font-semibold text-[11px]">
-                  9212716009@yescred
-                </div>
-                <a
-                  href="tel:9212716009"
-                  className="flex items-center justify-center gap-1 text-[11px] text-teal-700 font-semibold bg-white p-1 rounded border border-teal-200 hover:bg-teal-50"
-                >
-                  <Phone className="h-3 w-3" />
-                  <span>Call Support (9212716009)</span>
-                </a>
-              </div>
-            </div>
-
             {/* Footer */}
             <div className="pt-4 border-t border-slate-100 mt-auto space-y-2">
-              <a
-                href="/software-download"
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-center gap-1.5 w-full rounded-xl bg-teal-600 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-teal-700 transition"
+              <button
+                type="button"
+                onClick={handleCopyDownloadLink}
+                className={`flex items-center justify-center gap-1.5 w-full rounded-xl py-2.5 text-xs font-bold transition shadow-sm ${
+                  copiedLink
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-teal-600 text-white hover:bg-teal-700'
+                }`}
               >
-                <span>📥 Download KioskPro.exe</span>
-              </a>
+                {copiedLink ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    <span>Download Link Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    <span>Copy App Download Link</span>
+                  </>
+                )}
+              </button>
 
               <a
                 href="/api/license/verify?csp_code=3A450557"
