@@ -1,9 +1,9 @@
 {
-  "version": "2.2.1",
-  "latestAppVersion": "2.2.1",
+  "version": "2.2.2",
+  "latestAppVersion": "2.2.2",
   "appDownloadUrl": "https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro.exe",
   "patchDownloadUrl": "https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro_Patch.zip",
-  "releaseNotes": "KioskPro v2.2.1 - Fix auto-updater restart loop with NTFS safe-rename & WebView2 process tree termination, resolve Balance Enquiry Account tab navigation, dedicated Loan Deposit shortcuts (Enter+L / Enter++), fix Loan Deposit Send Verification Code & Password auto-fill, and eliminate accidental Card tab switching.",
+  "releaseNotes": "KioskPro v2.2.2 - Strictly restrict Loan Deposit to Enter+L shortcut only, remove extraneous triggers, and finalize auto-updater & biometric reliability.",
   "selectors": {
     "gps_connect": "button:contains('CONNECT'), input[value*='CONNECT']",
     "gps_get_location": "button:contains('GET LOCATION'), input[value*='GET LOCATION']",
