@@ -238,12 +238,6 @@ export default function TransactionsPage() {
   const handlePlanSelect = (plan: PlanType) => {
     setFormPlan(plan);
     switch (plan) {
-      case '1_DAY_TRIAL':
-        setFormPlanName('1-Day Free Trial (₹0)');
-        setFormAmount('0');
-        setFormDays('1');
-        setFormMethod('FREE_TRIAL');
-        break;
       case '1_MONTH':
         setFormPlanName('1 Month Starter License');
         setFormAmount('199');
@@ -280,8 +274,7 @@ export default function TransactionsPage() {
       return;
     }
 
-    const isTrial = formMethod === 'FREE_TRIAL' || formPlan === '1_DAY_TRIAL';
-    if (!isTrial && !formUtr.trim()) {
+    if (!formUtr.trim()) {
       alert('Transaction ID (UTR / Reference Number) is required.');
       return;
     }
@@ -300,7 +293,7 @@ export default function TransactionsPage() {
           amount: Number(formAmount) || 0,
           durationDays: Number(formDays) || 30,
           paymentMethod: formMethod,
-          utrNumber: isTrial ? 'FREE_TRIAL' : formUtr.trim(),
+          utrNumber: formUtr.trim(),
           notes: formNotes.trim() || undefined,
           autoRenewKiosk: formAutoRenew,
         }),
@@ -968,11 +961,11 @@ export default function TransactionsPage() {
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                   Select License Plan
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
                     type="button"
                     onClick={() => handlePlanSelect('12_MONTHS')}
-                    className={`p-2 rounded-xl border text-left transition ${
+                    className={`p-2.5 rounded-xl border text-left transition ${
                       formPlan === '12_MONTHS'
                         ? 'border-purple-600 bg-purple-50 text-purple-900 font-bold shadow-sm'
                         : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
@@ -985,7 +978,7 @@ export default function TransactionsPage() {
                   <button
                     type="button"
                     onClick={() => handlePlanSelect('6_MONTHS')}
-                    className={`p-2 rounded-xl border text-left transition ${
+                    className={`p-2.5 rounded-xl border text-left transition ${
                       formPlan === '6_MONTHS'
                         ? 'border-blue-600 bg-blue-50 text-blue-900 font-bold shadow-sm'
                         : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
@@ -998,7 +991,7 @@ export default function TransactionsPage() {
                   <button
                     type="button"
                     onClick={() => handlePlanSelect('3_MONTHS')}
-                    className={`p-2 rounded-xl border text-left transition ${
+                    className={`p-2.5 rounded-xl border text-left transition ${
                       formPlan === '3_MONTHS'
                         ? 'border-amber-600 bg-amber-50 text-amber-900 font-bold shadow-sm'
                         : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
@@ -1011,7 +1004,7 @@ export default function TransactionsPage() {
                   <button
                     type="button"
                     onClick={() => handlePlanSelect('1_MONTH')}
-                    className={`p-2 rounded-xl border text-left transition ${
+                    className={`p-2.5 rounded-xl border text-left transition ${
                       formPlan === '1_MONTH'
                         ? 'border-teal-600 bg-teal-50 text-teal-900 font-bold shadow-sm'
                         : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
@@ -1019,19 +1012,6 @@ export default function TransactionsPage() {
                   >
                     <div className="text-xs">1 Month Starter</div>
                     <div className="text-sm font-extrabold text-teal-700">₹199</div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handlePlanSelect('1_DAY_TRIAL')}
-                    className={`p-2 rounded-xl border text-left transition ${
-                      formPlan === '1_DAY_TRIAL'
-                        ? 'border-emerald-600 bg-emerald-50 text-emerald-900 font-bold shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="text-xs">1-Day Trial (24h)</div>
-                    <div className="text-sm font-extrabold text-emerald-700">₹0 (Free)</div>
                   </button>
                 </div>
               </div>
@@ -1078,18 +1058,17 @@ export default function TransactionsPage() {
                     <option value="UPI">UPI (Google Pay / PhonePe / Paytm)</option>
                     <option value="CASH">Cash in Hand</option>
                     <option value="BANK_TRANSFER">Bank Transfer (IMPS/NEFT)</option>
-                    <option value="FREE_TRIAL">Free Trial (₹0)</option>
                     <option value="ADMIN_OVERRIDE">Admin Manual Override</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                    UTR / Transaction ID {formMethod !== 'FREE_TRIAL' && formPlan !== '1_DAY_TRIAL' && <span className="text-rose-500">*</span>}
+                    UTR / Transaction ID <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
-                    required={formMethod !== 'FREE_TRIAL' && formPlan !== '1_DAY_TRIAL'}
-                    placeholder={formMethod === 'FREE_TRIAL' || formPlan === '1_DAY_TRIAL' ? 'Not required for Free Trial' : 'e.g. 431289128019 or UPI Ref'}
+                    required
+                    placeholder="e.g. 431289128019 or UPI Ref"
                     value={formUtr}
                     onChange={(e) => setFormUtr(e.target.value)}
                     className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl font-mono text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 shadow-inner"
