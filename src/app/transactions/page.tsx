@@ -59,7 +59,7 @@ export default function TransactionsPage() {
   const [formMethod, setFormMethod] = useState<PaymentMethodType>('UPI');
   const [formUtr, setFormUtr] = useState('');
   const [formNotes, setFormNotes] = useState('');
-  const [formAutoRenew, setFormAutoRenew] = useState(true);
+  const [formAutoRenew, setFormAutoRenew] = useState(false);
   const [formSubmitting, setFormSubmitting] = useState(false);
 
   // CSP Autocomplete suggestions state
@@ -1091,15 +1091,23 @@ export default function TransactionsPage() {
               </div>
 
               {/* Auto Renew Toggle */}
-              <div className="flex items-center gap-3 p-3 rounded-xl border border-teal-200 bg-teal-50/70">
+              <div
+                onClick={() => setFormAutoRenew(!formAutoRenew)}
+                className={`flex items-center gap-3 p-3 rounded-xl border transition cursor-pointer select-none ${
+                  formAutoRenew
+                    ? 'border-teal-300 bg-teal-50/80 text-teal-950 shadow-sm'
+                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100/70'
+                }`}
+              >
                 <input
                   type="checkbox"
                   id="autoRenewCheck"
                   checked={formAutoRenew}
                   onChange={(e) => setFormAutoRenew(e.target.checked)}
-                  className="h-4 w-4 rounded text-teal-600 focus:ring-teal-500"
+                  onClick={(e) => e.stopPropagation()}
+                  className="h-4 w-4 rounded text-teal-600 focus:ring-teal-500 cursor-pointer"
                 />
-                <label htmlFor="autoRenewCheck" className="text-xs font-semibold text-teal-950 cursor-pointer">
+                <label htmlFor="autoRenewCheck" className="text-xs font-semibold cursor-pointer">
                   Auto-Extend License: Automatically add {formDays} days to CSP’s current expiry date in Kiosks DB.
                 </label>
               </div>

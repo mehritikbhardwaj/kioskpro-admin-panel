@@ -249,7 +249,10 @@ export async function getKioskByCspCode(cspCode: string): Promise<KioskLicense |
   return kiosks.find((k) => k.cspCode.trim().toLowerCase() === clean);
 }
 
-export async function addKiosk(data: Omit<KioskLicense, 'id' | 'issuedAt' | 'expiresAt' | 'status'> & { durationMonths?: number; durationDays?: number; utrNumber?: string; paymentMethod?: PaymentMethodType }): Promise<KioskLicense> {
+export async function addKiosk(
+  data: Omit<KioskLicense, 'id' | 'issuedAt' | 'expiresAt' | 'status'> & { durationMonths?: number; durationDays?: number; utrNumber?: string; paymentMethod?: PaymentMethodType },
+  recordTransaction: boolean = true
+): Promise<KioskLicense> {
   const kiosks = await getKiosks();
   const now = new Date();
   const expiry = new Date(now);
@@ -274,27 +277,29 @@ export async function addKiosk(data: Omit<KioskLicense, 'id' | 'issuedAt' | 'exp
   inMemoryKiosks = kiosks;
   await persistData();
 
-  try {
-    const durationDays = (newKiosk.plan === '1_DAY_TRIAL' || data.durationDays === 1) 
-      ? 1 
-      : ((data.durationMonths || 1) * 30);
-    await addTransaction({
-      kioskId: newKiosk.id,
-      cspCode: newKiosk.cspCode,
-      operatorName: newKiosk.operatorName,
-      mobileNumber: newKiosk.mobileNumber,
-      location: newKiosk.location,
-      plan: newKiosk.plan,
-      planName: newKiosk.planName,
-      amount: newKiosk.amount,
-      durationDays,
-      paymentMethod: data.paymentMethod || (newKiosk.plan === '1_DAY_TRIAL' ? 'FREE_TRIAL' : 'UPI'),
-      utrNumber: data.utrNumber ? String(data.utrNumber).trim() : undefined,
-      notes: newKiosk.notes || 'New Kiosk Registration',
-      status: 'COMPLETED',
-    });
-  } catch (err) {
-    console.warn('Failed to add transaction for new kiosk:', err);
+  if (recordTransaction) {
+    try {
+      const durationDays = (newKiosk.plan === '1_DAY_TRIAL' || data.durationDays === 1) 
+        ? 1 
+        : ((data.durationMonths || 1) * 30);
+      await addTransaction({
+        kioskId: newKiosk.id,
+        cspCode: newKiosk.cspCode,
+        operatorName: newKiosk.operatorName,
+        mobileNumber: newKiosk.mobileNumber,
+        location: newKiosk.location,
+        plan: newKiosk.plan,
+        planName: newKiosk.planName,
+        amount: newKiosk.amount,
+        durationDays,
+        paymentMethod: data.paymentMethod || (newKiosk.plan === '1_DAY_TRIAL' ? 'FREE_TRIAL' : 'UPI'),
+        utrNumber: data.utrNumber ? String(data.utrNumber).trim() : undefined,
+        notes: newKiosk.notes || 'New Kiosk Registration',
+        status: 'COMPLETED',
+      });
+    } catch (err) {
+      console.warn('Failed to add transaction for new kiosk:', err);
+    }
   }
 
   return newKiosk;
@@ -446,7 +451,8 @@ export async function renewKiosk(
     paymentMethod?: PaymentMethodType; 
     utrNumber?: string; 
     notes?: string; 
-  }
+  },
+  recordTransaction: boolean = true
 ): Promise<KioskLicense | null> {
   const kiosks = await getKiosks();
   const idx = kiosks.findIndex((k) => k.id === id || k.cspCode.toLowerCase() === id.toLowerCase());
@@ -477,24 +483,26 @@ export async function renewKiosk(
   inMemoryKiosks = kiosks;
   await persistData();
 
-  try {
-    await addTransaction({
-      kioskId: current.id,
-      cspCode: current.cspCode,
-      operatorName: current.operatorName,
-      mobileNumber: current.mobileNumber,
-      location: current.location,
-      plan: updatedPlan,
-      planName: updatedPlanName,
-      amount: updatedAmount,
-      durationDays: days,
-      paymentMethod: planInfo?.paymentMethod || 'UPI',
-      utrNumber: planInfo?.utrNumber,
-      notes: planInfo?.notes || `Subscription renewed for ${days} days`,
-      status: 'COMPLETED',
-    });
-  } catch (err) {
-    console.warn('Failed to record renewal transaction:', err);
+  if (recordTransaction) {
+    try {
+      await addTransaction({
+        kioskId: current.id,
+        cspCode: current.cspCode,
+        operatorName: current.operatorName,
+        mobileNumber: current.mobileNumber,
+        location: current.location,
+        plan: updatedPlan,
+        planName: updatedPlanName,
+        amount: updatedAmount,
+        durationDays: days,
+        paymentMethod: planInfo?.paymentMethod || 'UPI',
+        utrNumber: planInfo?.utrNumber,
+        notes: planInfo?.notes || `Subscription renewed for ${days} days`,
+        status: 'COMPLETED',
+      });
+    } catch (err) {
+      console.warn('Failed to record renewal transaction:', err);
+    }
   }
 
   return kiosks[idx];

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
-import { getTransactions, addTransaction, getKiosks, renewKiosk } from '@/lib/db';
+import { getTransactions, addTransaction, getKiosks, renewKiosk, addKiosk } from '@/lib/db';
 import { PaymentMethodType, PlanType } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -60,16 +60,31 @@ export async function POST(req: NextRequest) {
       status: 'COMPLETED',
     });
 
-    // Optionally auto-renew the kiosk if requested or kiosk exists
-    if (autoRenewKiosk && kiosk) {
-      await renewKiosk(kiosk.id, days, {
-        plan: (plan as PlanType) || kiosk.plan,
-        planName: planName || kiosk.planName,
-        amount: cost,
-        paymentMethod: (paymentMethod as PaymentMethodType) || 'UPI',
-        utrNumber: utrNumber ? String(utrNumber).trim() : undefined,
-        notes: notes ? String(notes).trim() : undefined,
-      });
+    // Optionally auto-renew or register the kiosk if requested
+    if (autoRenewKiosk) {
+      if (kiosk) {
+        await renewKiosk(kiosk.id, days, {
+          plan: (plan as PlanType) || kiosk.plan,
+          planName: planName || kiosk.planName,
+          amount: cost,
+          paymentMethod: (paymentMethod as PaymentMethodType) || 'UPI',
+          utrNumber: utrNumber ? String(utrNumber).trim() : undefined,
+          notes: notes ? String(notes).trim() : undefined,
+        }, false);
+      } else {
+        await addKiosk({
+          cspCode: cleanCsp,
+          operatorName: (operatorName || 'SBI CSP Operator').trim(),
+          mobileNumber: txn.mobileNumber || '',
+          location: 'India',
+          plan: (plan as PlanType) || '1_MONTH',
+          planName: planName || '1 Month Starter License',
+          amount: cost,
+          durationDays: days,
+          utrNumber: utrNumber ? String(utrNumber).trim() : undefined,
+          paymentMethod: (paymentMethod as PaymentMethodType) || 'UPI',
+        }, false);
+      }
     }
 
     return NextResponse.json({ success: true, transaction: txn });
