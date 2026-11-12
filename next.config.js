@@ -15,25 +15,6 @@ const nextConfig = {
       },
     ];
   },
-  async redirects() {
-    return [
-      {
-        source: '/software-download',
-        destination: 'https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro_Setup.exe',
-        permanent: false,
-      },
-      {
-        source: '/download',
-        destination: 'https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro_Setup.exe',
-        permanent: false,
-      },
-      {
-        source: '/patch-download',
-        destination: 'https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro_Patch.zip',
-        permanent: false,
-      },
-    ];
-  },
 };
 
 module.exports = nextConfig;
