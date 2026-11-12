@@ -4,11 +4,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const rules = {
-    version: '2.1.8',
-    latestAppVersion: '2.1.8',
+    version: '2.1.9',
+    latestAppVersion: '2.1.9',
     appDownloadUrl: 'https://kioskpro-admin-panel.vercel.app/download',
     patchDownloadUrl: 'https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro_Patch.zip',
-    releaseNotes: 'KioskPro v2.1.8 - Fix Balance Enquiry & CIF auto-navigation to Account tab (resolved AEPS tab lock), robust tab container detection, center-point click simulation, and smart biometric selection fix.',
+    releaseNotes: 'KioskPro v2.1.9 - Fix Loan Deposit Send Verification Code auto-click, suppress premature Transaction Successful popup on intermediate enquiry, and add 5s auto-submit countdown on completion popup.',
     selectors: {
       gps_connect: "button:contains('CONNECT'), input[value*='CONNECT']",
       gps_get_location: "button:contains('GET LOCATION'), input[value*='GET LOCATION']",
