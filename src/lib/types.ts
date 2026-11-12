@@ -47,3 +47,23 @@ export interface SystemConfig {
   latestVersion: string;
   plans: PlanPricing[];
 }
+
+export type PaymentMethodType = 'UPI' | 'CASH' | 'FREE_TRIAL' | 'ADMIN_OVERRIDE' | 'BANK_TRANSFER';
+
+export interface SubscriptionTransaction {
+  id: string;
+  kioskId?: string;
+  cspCode: string;
+  operatorName: string;
+  mobileNumber?: string;
+  location?: string;
+  plan: PlanType;
+  planName: string;
+  amount: number;
+  durationDays: number;
+  paymentMethod: PaymentMethodType;
+  utrNumber?: string;
+  notes?: string;
+  status: 'COMPLETED' | 'PENDING' | 'REFUNDED';
+  createdAt: string;
+}

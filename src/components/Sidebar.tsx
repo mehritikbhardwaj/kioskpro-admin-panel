@@ -10,6 +10,7 @@ import {
   Settings, 
   QrCode, 
   CreditCard,
+  Receipt,
   ExternalLink 
 } from 'lucide-react';
 
@@ -19,6 +20,7 @@ export default function Sidebar() {
   const navItems = [
     { label: 'Dashboard', href: '/', icon: LayoutDashboard },
     { label: 'Kiosks & Licenses', href: '/kiosks', icon: Users },
+    { label: 'Billing & Ledger', href: '/transactions', icon: Receipt },
     { label: 'Remote Broadcast', href: '/broadcast', icon: Radio },
     { label: 'Pricing & UPI QR', href: '/pricing', icon: CreditCard },
   ];

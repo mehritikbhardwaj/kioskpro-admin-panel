@@ -21,7 +21,8 @@ import {
   MapPin,
   RefreshCw,
   ExternalLink,
-  CreditCard
+  CreditCard,
+  Receipt
 } from 'lucide-react';
 import { KioskLicense } from '@/lib/types';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -254,11 +255,20 @@ export default function DashboardPage() {
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <Link
+                href="/transactions"
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 sm:px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition"
+              >
+                <Receipt className="h-4 w-4 text-teal-600" />
+                <span className="hidden sm:inline">Billing Ledger</span>
+                <span className="sm:hidden">Ledger</span>
+              </Link>
+
+              <Link
                 href="/pricing"
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition"
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 sm:px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition"
               >
                 <CreditCard className="h-4 w-4 text-teal-600" />
-                <span>Set Prices &amp; QR</span>
+                <span>Pricing &amp; QR</span>
               </Link>
 
               <button
@@ -266,7 +276,7 @@ export default function DashboardPage() {
                 className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-teal-600/20 hover:bg-teal-700 transition"
               >
                 <Plus className="h-4 w-4" />
-                <span>Issue New License</span>
+                <span>Issue License</span>
               </button>
             </div>
           </div>
@@ -352,21 +362,27 @@ export default function DashboardPage() {
             </div>
 
             {/* Card 4: Subscription Revenue */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm">
+            <Link
+              href="/transactions"
+              className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm hover:border-teal-300 hover:shadow-md transition group block"
+            >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 group-hover:text-teal-700">
                   Total Revenue
                 </span>
-                <div className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
+                <div className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition">
                   <IndianRupee className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
               </div>
-              <div className="mt-2 sm:mt-3 flex items-baseline gap-1">
+              <div className="mt-2 sm:mt-3 flex items-baseline justify-between">
                 <span className="text-lg sm:text-2xl font-black text-slate-900">
                   ₹{stats.totalRevenue.toLocaleString('en-IN')}
                 </span>
+                <span className="text-[10px] font-bold text-teal-600 group-hover:underline">
+                  Ledger →
+                </span>
               </div>
-            </div>
+            </Link>
           </div>
 
           {/* Kiosk Management Section */}

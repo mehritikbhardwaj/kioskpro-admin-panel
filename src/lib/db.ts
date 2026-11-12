@@ -1,7 +1,7 @@
 import { Redis } from '@upstash/redis';
 import fs from 'fs';
 import path from 'path';
-import { KioskLicense, BroadcastAnnouncement, SystemConfig, LicenseStatus, PlanPricing } from './types';
+import { KioskLicense, BroadcastAnnouncement, SystemConfig, LicenseStatus, PlanPricing, SubscriptionTransaction, PaymentMethodType, PlanType } from './types';
 
 const INITIAL_KIOSKS: KioskLicense[] = [
   {
@@ -18,6 +18,26 @@ const INITIAL_KIOSKS: KioskLicense[] = [
     status: 'ACTIVE',
     notes: 'Primary Master Kiosk - 12 Months Subscribed',
     lastSeenAt: new Date().toISOString()
+  }
+];
+
+const INITIAL_TRANSACTIONS: SubscriptionTransaction[] = [
+  {
+    id: 'txn-init-001',
+    kioskId: 'kiosk-001',
+    cspCode: '3A450557',
+    operatorName: 'Nagmani Bhardwaj',
+    mobileNumber: '9212716009',
+    location: 'Patna, Bihar',
+    plan: '12_MONTHS',
+    planName: '12 Months Enterprise',
+    amount: 1799,
+    durationDays: 365,
+    paymentMethod: 'UPI',
+    utrNumber: 'UPI431600982711',
+    notes: 'Official 12 Months Subscription Activation',
+    status: 'COMPLETED',
+    createdAt: '2026-11-09T00:00:00.000Z',
   }
 ];
 
@@ -107,6 +127,7 @@ function getRedisClient(): Redis | null {
 // Global in-memory storage for fallback
 let inMemoryKiosks: KioskLicense[] = [...INITIAL_KIOSKS];
 let inMemoryBroadcast: BroadcastAnnouncement = { ...INITIAL_BROADCAST };
+let inMemoryTransactions: SubscriptionTransaction[] = [...INITIAL_TRANSACTIONS];
 
 // Local file path (for local development or persistent mounts)
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), '.data');
@@ -135,6 +156,9 @@ function ensureDataFile() {
             : DEFAULT_PLANS,
         };
       }
+      if (Array.isArray(parsed.transactions) && parsed.transactions.length > 0) {
+        inMemoryTransactions = parsed.transactions;
+      }
     } else {
       saveToFile();
     }
@@ -155,6 +179,7 @@ function saveToFile() {
           kiosks: inMemoryKiosks,
           broadcast: inMemoryBroadcast,
           systemConfig: inMemorySystemConfig,
+          transactions: inMemoryTransactions,
           updatedAt: new Date().toISOString()
         },
         null,
@@ -171,6 +196,7 @@ async function persistData() {
       await redis.set('kioskpro_kiosks', inMemoryKiosks);
       await redis.set('kioskpro_broadcast', inMemoryBroadcast);
       await redis.set('kioskpro_system_config', inMemorySystemConfig);
+      await redis.set('kioskpro_transactions', inMemoryTransactions);
     } catch (err) {
       console.warn('Redis write error:', err);
     }
@@ -247,6 +273,29 @@ export async function addKiosk(data: Omit<KioskLicense, 'id' | 'issuedAt' | 'exp
   kiosks.unshift(newKiosk);
   inMemoryKiosks = kiosks;
   await persistData();
+
+  try {
+    const durationDays = (newKiosk.plan === '1_DAY_TRIAL' || data.durationDays === 1) 
+      ? 1 
+      : ((data.durationMonths || 1) * 30);
+    await addTransaction({
+      kioskId: newKiosk.id,
+      cspCode: newKiosk.cspCode,
+      operatorName: newKiosk.operatorName,
+      mobileNumber: newKiosk.mobileNumber,
+      location: newKiosk.location,
+      plan: newKiosk.plan,
+      planName: newKiosk.planName,
+      amount: newKiosk.amount,
+      durationDays,
+      paymentMethod: newKiosk.plan === '1_DAY_TRIAL' ? 'FREE_TRIAL' : 'UPI',
+      notes: newKiosk.notes || 'New Kiosk Registration',
+      status: 'COMPLETED',
+    });
+  } catch (err) {
+    console.warn('Failed to add transaction for new kiosk:', err);
+  }
+
   return newKiosk;
 }
 
@@ -298,6 +347,24 @@ export async function grantTrial(
 
     inMemoryKiosks = kiosks;
     await persistData();
+
+    try {
+      await addTransaction({
+        kioskId: existing.id,
+        cspCode: existing.cspCode,
+        operatorName: existing.operatorName,
+        mobileNumber: existing.mobileNumber,
+        location: existing.location,
+        plan: '1_DAY_TRIAL',
+        planName: '1-Day Free Trial (₹0)',
+        amount: 0,
+        durationDays: 1,
+        paymentMethod: 'FREE_TRIAL',
+        notes: '1-Day Free Trial activation',
+        status: 'COMPLETED',
+      });
+    } catch { }
+
     return {
       success: true,
       message: '1-Day Free Trial activated successfully! Valid for 24 hours.',
@@ -329,6 +396,24 @@ export async function grantTrial(
   kiosks.unshift(newTrial);
   inMemoryKiosks = kiosks;
   await persistData();
+
+  try {
+    await addTransaction({
+      kioskId: newTrial.id,
+      cspCode: newTrial.cspCode,
+      operatorName: newTrial.operatorName,
+      mobileNumber: newTrial.mobileNumber,
+      location: newTrial.location,
+      plan: '1_DAY_TRIAL',
+      planName: '1-Day Free Trial (₹0)',
+      amount: 0,
+      durationDays: 1,
+      paymentMethod: 'FREE_TRIAL',
+      notes: '1-Day Free Trial activation',
+      status: 'COMPLETED',
+    });
+  } catch { }
+
   return {
     success: true,
     message: '1-Day Free Trial activated successfully! Valid for 24 hours.',
@@ -350,7 +435,18 @@ export async function updateKiosk(id: string, updates: Partial<KioskLicense>): P
   return kiosks[idx];
 }
 
-export async function renewKiosk(id: string, days: number): Promise<KioskLicense | null> {
+export async function renewKiosk(
+  id: string, 
+  days: number,
+  planInfo?: { 
+    plan?: PlanType; 
+    planName?: string; 
+    amount?: number; 
+    paymentMethod?: PaymentMethodType; 
+    utrNumber?: string; 
+    notes?: string; 
+  }
+): Promise<KioskLicense | null> {
   const kiosks = await getKiosks();
   const idx = kiosks.findIndex((k) => k.id === id || k.cspCode.toLowerCase() === id.toLowerCase());
   if (idx === -1) return null;
@@ -363,8 +459,15 @@ export async function renewKiosk(id: string, days: number): Promise<KioskLicense
   const newExpiry = new Date(baseDate);
   newExpiry.setDate(newExpiry.getDate() + days);
 
+  const updatedPlan = planInfo?.plan || current.plan;
+  const updatedPlanName = planInfo?.planName || current.planName;
+  const updatedAmount = planInfo?.amount !== undefined ? planInfo.amount : current.amount;
+
   kiosks[idx] = {
     ...current,
+    plan: updatedPlan,
+    planName: updatedPlanName,
+    amount: updatedAmount,
     expiresAt: newExpiry.toISOString(),
     status: 'ACTIVE',
     hasUsedTrial: true,
@@ -372,6 +475,27 @@ export async function renewKiosk(id: string, days: number): Promise<KioskLicense
 
   inMemoryKiosks = kiosks;
   await persistData();
+
+  try {
+    await addTransaction({
+      kioskId: current.id,
+      cspCode: current.cspCode,
+      operatorName: current.operatorName,
+      mobileNumber: current.mobileNumber,
+      location: current.location,
+      plan: updatedPlan,
+      planName: updatedPlanName,
+      amount: updatedAmount,
+      durationDays: days,
+      paymentMethod: planInfo?.paymentMethod || 'UPI',
+      utrNumber: planInfo?.utrNumber,
+      notes: planInfo?.notes || `Subscription renewed for ${days} days`,
+      status: 'COMPLETED',
+    });
+  } catch (err) {
+    console.warn('Failed to record renewal transaction:', err);
+  }
+
   return kiosks[idx];
 }
 
@@ -482,4 +606,43 @@ export async function updateSystemConfig(config: Partial<SystemConfig>): Promise
 
 export function getSystemConfigSync(): SystemConfig {
   return inMemorySystemConfig;
+}
+
+// -------------------------------------------------------------
+// SUBSCRIPTION TRANSACTIONS LEDGER
+// -------------------------------------------------------------
+export async function getTransactions(): Promise<SubscriptionTransaction[]> {
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const data = await redis.get<SubscriptionTransaction[]>('kioskpro_transactions');
+      if (Array.isArray(data) && data.length > 0) {
+        inMemoryTransactions = data;
+        return inMemoryTransactions;
+      } else {
+        await redis.set('kioskpro_transactions', inMemoryTransactions);
+      }
+    } catch (err) {
+      console.warn('Redis getTransactions error:', err);
+    }
+  } else {
+    ensureDataFile();
+  }
+  return inMemoryTransactions;
+}
+
+export async function addTransaction(
+  data: Omit<SubscriptionTransaction, 'id' | 'createdAt'>
+): Promise<SubscriptionTransaction> {
+  const txns = await getTransactions();
+  const newTxn: SubscriptionTransaction = {
+    ...data,
+    id: `txn-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    createdAt: new Date().toISOString(),
+  };
+
+  txns.unshift(newTxn);
+  inMemoryTransactions = txns;
+  await persistData();
+  return newTxn;
 }
