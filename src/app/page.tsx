@@ -488,7 +488,6 @@ export default function DashboardPage() {
                             <div className="font-mono font-bold text-teal-700 text-sm">
                               {kiosk.cspCode}
                             </div>
-                            <div className="text-[11px] text-slate-400">{kiosk.location}</div>
                           </td>
 
                           <td className="px-5 py-4">
@@ -623,9 +622,6 @@ export default function DashboardPage() {
                         <div>
                           <span className="font-mono font-bold text-teal-700 text-sm">
                             {kiosk.cspCode}
-                          </span>
-                          <span className="text-[11px] text-slate-400 ml-1.5">
-                            ({kiosk.location || 'India'})
                           </span>
                         </div>
 

@@ -289,10 +289,6 @@ export default function KiosksPage() {
                             <div className="font-mono font-bold text-teal-700 text-sm">
                               {kiosk.cspCode}
                             </div>
-                            <div className="flex items-center gap-1 text-[11px] text-slate-400">
-                              <MapPin className="h-3 w-3 shrink-0" />
-                              <span>{kiosk.location || 'India'}</span>
-                            </div>
                           </td>
 
                           <td className="px-5 py-4">
@@ -445,9 +441,6 @@ export default function KiosksPage() {
                         <div>
                           <span className="font-mono font-bold text-teal-700 text-sm">
                             {kiosk.cspCode}
-                          </span>
-                          <span className="text-[11px] text-slate-400 ml-1.5">
-                            ({kiosk.location || 'India'})
                           </span>
                         </div>
 
