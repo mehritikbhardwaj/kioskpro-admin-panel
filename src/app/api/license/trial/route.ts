@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { cspCode, operatorName, mobileNumber, location, hwid } = body;
+    const { cspCode, operatorName, mobileNumber, location, hwid, version, appVersion } = body;
 
     if (!cspCode || cspCode.trim() === '') {
       return NextResponse.json(
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     }
 
     const systemConfig = await getSystemConfig();
-    const result = await grantTrial(cspCode, operatorName, mobileNumber, location, hwid);
+    const result = await grantTrial(cspCode, operatorName, mobileNumber, location, hwid, version || appVersion);
 
     return NextResponse.json({
       success: result.success,

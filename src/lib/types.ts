@@ -18,6 +18,7 @@ export interface KioskLicense {
   notes?: string;
   lastSeenAt?: string;
   hasUsedTrial?: boolean;
+  appVersion?: string;
 }
 
 export interface BroadcastAnnouncement {

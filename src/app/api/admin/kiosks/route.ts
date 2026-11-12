@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { cspCode, operatorName, mobileNumber, location, plan, amount, notes, durationMonths, utrNumber, paymentMethod } = body;
+    const { cspCode, operatorName, mobileNumber, location, plan, amount, notes, durationMonths, utrNumber, paymentMethod, appVersion } = body;
 
     if (!cspCode || !operatorName) {
       return NextResponse.json({ success: false, message: 'CSP Code and Operator Name are required' }, { status: 400 });
@@ -80,6 +80,7 @@ export async function POST(req: NextRequest) {
       durationDays: isTrial ? 1 : undefined,
       utrNumber: isTrial ? 'FREE_TRIAL' : String(utrNumber).trim(),
       paymentMethod: isTrial ? 'FREE_TRIAL' : (paymentMethod || 'UPI'),
+      appVersion: appVersion ? String(appVersion).trim() : '2.1.9',
     });
 
     return NextResponse.json({ success: true, data: newKiosk });

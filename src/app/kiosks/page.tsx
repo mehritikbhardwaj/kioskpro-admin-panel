@@ -192,7 +192,8 @@ export default function KiosksPage() {
       k.cspCode.toLowerCase().includes(q) ||
       k.operatorName.toLowerCase().includes(q) ||
       (k.mobileNumber && k.mobileNumber.toLowerCase().includes(q)) ||
-      (k.location && k.location.toLowerCase().includes(q));
+      (k.location && k.location.toLowerCase().includes(q)) ||
+      (k.appVersion && k.appVersion.toLowerCase().includes(q));
 
     if (!matchesSearch) return false;
 
@@ -289,6 +290,19 @@ export default function KiosksPage() {
                             <div className="font-mono font-bold text-teal-700 text-sm">
                               {kiosk.cspCode}
                             </div>
+                            {kiosk.appVersion ? (
+                              <div className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 text-[10px] font-mono font-semibold rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                <span className={`w-1.5 h-1.5 rounded-full ${kiosk.appVersion === '2.1.9' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                                v{kiosk.appVersion}
+                                {kiosk.appVersion === '2.1.9' ? (
+                                  <span className="text-[9px] text-emerald-600 font-medium ml-0.5">Latest</span>
+                                ) : (
+                                  <span className="text-[9px] text-amber-600 font-medium ml-0.5">Update</span>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-[10px] text-slate-400 font-mono mt-0.5">v?</div>
+                            )}
                           </td>
 
                           <td className="px-5 py-4">
@@ -436,12 +450,18 @@ export default function KiosksPage() {
                   const daysLeft = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
                   return (
                     <div key={kiosk.id} className="p-4 space-y-2.5 hover:bg-slate-50 transition">
-                      {/* Top: CSP + Status */}
+                      {/* Top: CSP + Version + Status */}
                       <div className="flex items-center justify-between">
-                        <div>
+                        <div className="flex items-center gap-2">
                           <span className="font-mono font-bold text-teal-700 text-sm">
                             {kiosk.cspCode}
                           </span>
+                          {kiosk.appVersion && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-mono font-semibold rounded bg-slate-100 text-slate-700 border border-slate-200">
+                              <span className={`w-1.5 h-1.5 rounded-full ${kiosk.appVersion === '2.1.9' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                              v{kiosk.appVersion}
+                            </span>
+                          )}
                         </div>
 
                         <div>

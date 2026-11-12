@@ -17,7 +17,8 @@ const INITIAL_KIOSKS: KioskLicense[] = [
     expiresAt: '2027-11-09T23:59:59.000Z',
     status: 'ACTIVE',
     notes: 'Primary Master Kiosk - 12 Months Subscribed',
-    lastSeenAt: new Date().toISOString()
+    lastSeenAt: new Date().toISOString(),
+    appVersion: '2.1.9',
   }
 ];
 
@@ -103,7 +104,7 @@ export const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
   distributorUpi: '9212716009@yescred',
   qrCodeUrl: '/qr_code.jpg',
   minRequiredVersion: '2.1.5',
-  latestVersion: '2.1.5',
+  latestVersion: '2.1.9',
   plans: DEFAULT_PLANS,
 };
 
@@ -310,7 +311,8 @@ export async function grantTrial(
   operatorName?: string,
   mobileNumber?: string,
   location?: string,
-  hwid?: string
+  hwid?: string,
+  appVersion?: string
 ): Promise<{ success: boolean; message: string; kiosk?: KioskLicense }> {
   const clean = cspCode.trim().toLowerCase();
   const kiosks = await getKiosks();
@@ -350,6 +352,7 @@ export async function grantTrial(
     if (mobileNumber && !existing.mobileNumber) existing.mobileNumber = mobileNumber;
     if (location && !existing.location) existing.location = location;
     if (hwid) existing.machineHwid = hwid;
+    if (appVersion && appVersion.trim()) existing.appVersion = appVersion.trim();
 
     inMemoryKiosks = kiosks;
     await persistData();
@@ -397,6 +400,7 @@ export async function grantTrial(
     machineHwid: hwid,
     notes: '1-Day Trial Activated',
     lastSeenAt: now.toISOString(),
+    appVersion: appVersion?.trim() || '2.1.9',
   };
 
   kiosks.unshift(newTrial);
@@ -534,7 +538,7 @@ export async function deleteKiosk(id: string): Promise<boolean> {
   return false;
 }
 
-export async function updateLastSeen(cspCode: string, machineHwid?: string): Promise<void> {
+export async function updateLastSeen(cspCode: string, machineHwid?: string, appVersion?: string): Promise<void> {
   const kiosks = await getKiosks();
   const clean = cspCode.trim().toLowerCase();
   const kiosk = kiosks.find((k) => k.cspCode.trim().toLowerCase() === clean);
@@ -542,6 +546,9 @@ export async function updateLastSeen(cspCode: string, machineHwid?: string): Pro
     kiosk.lastSeenAt = new Date().toISOString();
     if (machineHwid && !kiosk.machineHwid) {
       kiosk.machineHwid = machineHwid;
+    }
+    if (appVersion && appVersion.trim()) {
+      kiosk.appVersion = appVersion.trim();
     }
     inMemoryKiosks = kiosks;
     await persistData();

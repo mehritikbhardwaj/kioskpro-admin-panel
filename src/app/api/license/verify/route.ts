@@ -8,7 +8,12 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const cspCode = searchParams.get('csp_code') || searchParams.get('kiosk_id');
     const hwid = searchParams.get('hwid') || '';
-    const version = searchParams.get('version') || '';
+    let clientVersion = (searchParams.get('version') || '').trim();
+    const userAgent = req.headers.get('user-agent') || '';
+    if (!clientVersion && userAgent.includes('KioskPro-Client/')) {
+      const match = userAgent.match(/KioskPro-Client\/([0-9.]+)/);
+      if (match) clientVersion = match[1];
+    }
 
     const systemConfig = await getSystemConfig();
     const broadcast = await getBroadcast();
@@ -48,8 +53,8 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Update last ping time & record hardware ID
-    await updateLastSeen(cspCode, hwid);
+    // Update last ping time, hardware ID & client software version
+    await updateLastSeen(cspCode, hwid, clientVersion);
 
     const now = new Date();
     const expiresAt = new Date(kiosk.expiresAt);
