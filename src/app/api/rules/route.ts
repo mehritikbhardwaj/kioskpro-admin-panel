@@ -4,11 +4,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const rules = {
-    version: '2.1.7',
-    latestAppVersion: '2.1.7',
+    version: '2.1.8',
+    latestAppVersion: '2.1.8',
     appDownloadUrl: 'https://kioskpro-admin-panel.vercel.app/download',
     patchDownloadUrl: 'https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro_Patch.zip',
-    releaseNotes: 'KioskPro v2.1.7 - Added dedicated Loan Deposit shortcuts (Enter + L / Enter + + / Enter + .) with pre-selected Loan Deposit mode, along with v2.1.6 Account tab auto-navigation and biometric fixes.',
+    releaseNotes: 'KioskPro v2.1.8 - Fix Balance Enquiry & CIF auto-navigation to Account tab (resolved AEPS tab lock), robust tab container detection, center-point click simulation, and smart biometric selection fix.',
     selectors: {
       gps_connect: "button:contains('CONNECT'), input[value*='CONNECT']",
       gps_get_location: "button:contains('GET LOCATION'), input[value*='GET LOCATION']",
