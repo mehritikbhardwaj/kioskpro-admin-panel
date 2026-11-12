@@ -7,6 +7,7 @@ export async function GET() {
     version: '2.1.2',
     latestAppVersion: '2.1.2',
     appDownloadUrl: 'https://kioskpro-admin-panel.vercel.app/software-download',
+    patchDownloadUrl: 'https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro_Patch.zip',
     releaseNotes: 'KioskPro v2.1.2 - Added Mandatory Mobile & WhatsApp Number Capture, Smart Biometric Auto-Retry Engine, 1-Keystroke Modal Pre-population, Digitally Signed Standalone Build.',
     selectors: {
       gps_connect: "button:contains('CONNECT'), input[value*='CONNECT']",
