@@ -4,11 +4,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const rules = {
-    version: '2.1.5',
-    latestAppVersion: '2.1.5',
+    version: '2.1.6',
+    latestAppVersion: '2.1.6',
     appDownloadUrl: 'https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro_Setup.exe',
     patchDownloadUrl: 'https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro_Patch.zip',
-    releaseNotes: 'KioskPro v2.1.5 - Optimized Full Hotkeys Flow (Enter+0..9 hold & sequential press, F1..F12 audit, Repeat Txn alignment, and keyboard modal navigation).',
+    releaseNotes: 'KioskPro v2.1.6 - Fixed Enter+1 Balance Enquiry / CIF navigation to Account tab, reinforced tab switcher across AEPS/Account/Card, and updated Fingerprint biometric auto-select for all service screens.',
     selectors: {
       gps_connect: "button:contains('CONNECT'), input[value*='CONNECT']",
       gps_get_location: "button:contains('GET LOCATION'), input[value*='GET LOCATION']",
