@@ -1,0 +1,22 @@
+{
+  "version": "2.2.0",
+  "latestAppVersion": "2.2.0",
+  "appDownloadUrl": "https://kioskpro-admin-panel.vercel.app/download",
+  "patchDownloadUrl": "https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro_Patch.zip",
+  "releaseNotes": "KioskPro v2.2.0 - Fix OTP popup duplicate/reopening loop, eliminate double Send Verification Code SMS, auto-advance Confirm Details screen, and instant Transaction Password auto-fill.",
+  "selectors": {
+    "gps_connect": "button:contains('CONNECT'), input[value*='CONNECT']",
+    "gps_get_location": "button:contains('GET LOCATION'), input[value*='GET LOCATION']",
+    "gps_proceed": "button:contains('PROCEED'), input[value*='PROCEED'], button.proceedbutton",
+    "aeps_proceed": "button.proceedbutton, button#btnProceed",
+    "login_proceed": "button[type='submit'], button.proceedbutton"
+  },
+  "dynamicPatches": [
+    {
+      "name": "SBI_GPS_Handler",
+      "urlFilter": "unify",
+      "script": "// Dynamic patch injected automatically on all SBI Unify pages"
+    }
+  ],
+  "customJs": "(function() { if (window.navigator && window.navigator.serial) { try { var _orig = window.navigator.serial.requestPort; window.navigator.serial.requestPort = async function(opts) { try { var ports = await window.navigator.serial.getPorts(); if (ports && ports.length > 0) { var target = null; for (var i = 0; i < ports.length; i++) { var inf = ports[i].getInfo ? ports[i].getInfo() : {}; var vid = inf.usbVendorId; if (vid !== 0x079b && vid !== 1947 && vid !== 0x1234 && vid !== 4660 && vid !== 0x2808) { target = ports[i]; } } if (!target && ports.length > 0) target = ports[ports.length - 1]; if (target) return target; } } catch(e) {} return _orig.call(window.navigator.serial, opts); }; } catch(e) {} } setInterval(function() { try { var bodyTxt = document.body ? document.body.innerText : ''; var hasAuthMode = bodyTxt.includes('Authentication Mode') || bodyTxt.includes('Authenticate Mode') || bodyTxt.includes('Fingerprint'); var hasService = bodyTxt.includes('Cash Withdrawal') || bodyTxt.includes('Cash Deposit') || bodyTxt.includes('Balance Enquiry') || bodyTxt.includes('Balance Inquiry') || bodyTxt.includes('Mini Statement') || bodyTxt.includes('AEPS'); if (hasAuthMode || hasService) { var chk = document.querySelector('input[type=\"radio\"]:checked'); if (!chk) { var fp = document.getElementById('radio_Fingerprint') || document.querySelector('input[type=\"radio\"][value*=\"Fingerprint\" i]') || document.querySelector('input[name*=\"auth\" i][value*=\"Finger\" i]'); if (fp) { fp.checked = true; fp.dispatchEvent(new Event('input', {bubbles: true})); fp.dispatchEvent(new Event('change', {bubbles: true})); fp.click(); } var fpl = Array.from(document.querySelectorAll('label, span, p, div')).find(function(l) { if (!l || l.children.length > 2) return false; var t = (l.innerText||'').trim().toLowerCase(); return t === 'fingerprint' || t === 'finger print'; }); if (fpl) fpl.click(); } } } catch(e){} }, 250); })();"
+}
