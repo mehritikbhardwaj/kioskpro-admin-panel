@@ -6,7 +6,7 @@ export async function GET() {
   const rules = {
     version: '2.1.5',
     latestAppVersion: '2.1.5',
-    appDownloadUrl: 'https://kioskpro-admin-panel.vercel.app/software-download',
+    appDownloadUrl: 'https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro_Setup.exe',
     patchDownloadUrl: 'https://github.com/mehritikbhardwaj/kioskpro-rules/releases/latest/download/KioskPro_Patch.zip',
     releaseNotes: 'KioskPro v2.1.5 - Optimized Full Hotkeys Flow (Enter+0..9 hold & sequential press, F1..F12 audit, Repeat Txn alignment, and keyboard modal navigation).',
     selectors: {
