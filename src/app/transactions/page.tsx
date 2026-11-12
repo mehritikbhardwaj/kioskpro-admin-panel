@@ -62,6 +62,11 @@ export default function TransactionsPage() {
   const [formAutoRenew, setFormAutoRenew] = useState(true);
   const [formSubmitting, setFormSubmitting] = useState(false);
 
+  // CSP Autocomplete suggestions state
+  const [showCspSuggestions, setShowCspSuggestions] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const cspBoxRef = useRef<HTMLDivElement>(null);
+
   // Toast / Copy feedback
   const [copiedTxnId, setCopiedTxnId] = useState<string | null>(null);
   const [copiedReceiptLink, setCopiedReceiptLink] = useState(false);
@@ -102,15 +107,120 @@ export default function TransactionsPage() {
     fetchData();
   }, []);
 
+  // Collect all known CSPs across active Kiosks and historical Transactions
+  const knownCSPs = useMemo(() => {
+    const map = new Map<string, { cspCode: string; operatorName: string; mobileNumber: string; status?: string; planName?: string }>();
+
+    // 1. Active Kiosks list
+    kiosks.forEach((k) => {
+      if (k.cspCode) {
+        const code = k.cspCode.trim().toUpperCase();
+        map.set(code, {
+          cspCode: code,
+          operatorName: k.operatorName || '',
+          mobileNumber: k.mobileNumber || '',
+          status: k.status,
+          planName: k.planName,
+        });
+      }
+    });
+
+    // 2. Historical transactions
+    transactions.forEach((t) => {
+      if (t.cspCode) {
+        const code = t.cspCode.trim().toUpperCase();
+        if (!map.has(code)) {
+          map.set(code, {
+            cspCode: code,
+            operatorName: t.operatorName || '',
+            mobileNumber: t.mobileNumber || '',
+            status: 'REGISTERED',
+            planName: t.planName,
+          });
+        }
+      }
+    });
+
+    return Array.from(map.values());
+  }, [kiosks, transactions]);
+
+  // Dynamic filter for suggestions as user types
+  const cspSuggestions = useMemo(() => {
+    const q = formCsp.trim().toLowerCase();
+    if (!q) {
+      return knownCSPs.slice(0, 6);
+    }
+    return knownCSPs
+      .filter((k) => {
+        return (
+          k.cspCode.toLowerCase().includes(q) ||
+          k.operatorName.toLowerCase().includes(q) ||
+          (k.mobileNumber && k.mobileNumber.includes(q))
+        );
+      })
+      .slice(0, 8);
+  }, [knownCSPs, formCsp]);
+
+  // Click outside to close suggestion dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (cspBoxRef.current && !cspBoxRef.current.contains(e.target as Node)) {
+        setShowCspSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // Autofill kiosk info when CSP is typed in Record Modal
   const handleCspChange = (cspInput: string) => {
     setFormCsp(cspInput);
-    const clean = cspInput.trim().toLowerCase();
+    setShowCspSuggestions(true);
+    setHighlightedIndex(0);
+
+    const clean = cspInput.trim().toUpperCase();
     if (clean) {
-      const match = kiosks.find((k) => k.cspCode.toLowerCase() === clean);
+      const match = knownCSPs.find((k) => k.cspCode === clean);
       if (match) {
         setFormName(match.operatorName || '');
         setFormMobile(match.mobileNumber || '');
+      }
+    }
+  };
+
+  // Click on a suggestion to immediately auto-fill CSP, Operator Name, and Mobile Number
+  const handleSelectSuggestion = (item: { cspCode: string; operatorName: string; mobileNumber: string }) => {
+    setFormCsp(item.cspCode);
+    setFormName(item.operatorName);
+    setFormMobile(item.mobileNumber);
+    setShowCspSuggestions(false);
+  };
+
+  // Keyboard navigation for suggestions
+  const handleCspKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showCspSuggestions || cspSuggestions.length === 0) {
+      if (e.key === 'ArrowDown') {
+        setShowCspSuggestions(true);
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev + 1) % cspSuggestions.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev - 1 + cspSuggestions.length) % cspSuggestions.length);
+    } else if (e.key === 'Enter') {
+      if (cspSuggestions[highlightedIndex]) {
+        e.preventDefault();
+        handleSelectSuggestion(cspSuggestions[highlightedIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      setShowCspSuggestions(false);
+    } else if (e.key === 'Tab') {
+      if (cspSuggestions[highlightedIndex]) {
+        handleSelectSuggestion(cspSuggestions[highlightedIndex]);
       }
     }
   };
@@ -712,19 +822,101 @@ export default function TransactionsPage() {
 
             {/* Modal Form */}
             <form onSubmit={handleRecordSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-              {/* CSP Code */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                  CSP Code <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. 3A450557 or 1A990022"
-                  value={formCsp}
-                  onChange={(e) => handleCspChange(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl font-mono uppercase focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
-                  required
-                />
+              {/* CSP Code with Auto-Suggestion Dropdown */}
+              <div ref={cspBoxRef} className="relative">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                    CSP Code <span className="text-rose-500">*</span>
+                  </label>
+                  {formCsp && (
+                    <span className="text-[11px] text-teal-600 font-semibold">
+                      {cspSuggestions.length > 0 ? `${cspSuggestions.length} CSP found` : 'New CSP'}
+                    </span>
+                  )}
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="e.g. 3A450557 or 1A990022"
+                    value={formCsp}
+                    onChange={(e) => handleCspChange(e.target.value)}
+                    onFocus={() => setShowCspSuggestions(true)}
+                    onKeyDown={handleCspKeyDown}
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl font-mono uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-slate-900 font-bold"
+                    required
+                    autoComplete="off"
+                  />
+                  {formCsp && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormCsp('');
+                        setFormName('');
+                        setFormMobile('');
+                        setShowCspSuggestions(false);
+                      }}
+                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition"
+                      title="Clear"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Suggestions Dropdown */}
+                {showCspSuggestions && cspSuggestions.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full mt-1.5 z-40 max-h-56 overflow-y-auto rounded-xl bg-white border border-teal-200 shadow-2xl divide-y divide-slate-100 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50/90 flex justify-between items-center sticky top-0 backdrop-blur-sm border-b border-teal-100">
+                      <span>Matching CSPs ({cspSuggestions.length})</span>
+                      <span className="text-[9px] text-slate-500 font-normal">Click to auto-fill Name &amp; Mobile</span>
+                    </div>
+                    {cspSuggestions.map((item, idx) => (
+                      <button
+                        key={item.cspCode}
+                        type="button"
+                        onClick={() => handleSelectSuggestion(item)}
+                        onMouseEnter={() => setHighlightedIndex(idx)}
+                        className={`w-full px-3.5 py-2.5 text-left flex items-center justify-between transition ${
+                          highlightedIndex === idx
+                            ? 'bg-teal-50 text-teal-900 ring-1 ring-inset ring-teal-200'
+                            : 'hover:bg-slate-50 text-slate-800'
+                        }`}
+                      >
+                        <div className="flex flex-col min-w-0 pr-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-extrabold text-xs px-2 py-0.5 rounded-md bg-teal-100 text-teal-900 tracking-wider">
+                              {item.cspCode}
+                            </span>
+                            <span className="text-xs font-bold text-slate-900 truncate">
+                              {item.operatorName || 'SBI CSP Operator'}
+                            </span>
+                          </div>
+                          {item.mobileNumber && (
+                            <span className="text-[11px] text-slate-500 font-mono mt-0.5 flex items-center gap-1">
+                              📞 {item.mobileNumber}
+                            </span>
+                          )}
+                        </div>
+                        {item.status && (
+                          <span
+                            className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 ${
+                              item.status === 'ACTIVE'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : item.status === 'TRIAL'
+                                ? 'bg-teal-100 text-teal-800'
+                                : item.status === 'EXPIRED'
+                                ? 'bg-rose-100 text-rose-800'
+                                : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Operator Name & Phone */}

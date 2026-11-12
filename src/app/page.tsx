@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
@@ -52,6 +52,11 @@ export default function DashboardPage() {
   const [formAmount, setFormAmount] = useState('1799');
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  // CSP Autocomplete in Issue Modal
+  const [showCspSuggestions, setShowCspSuggestions] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const cspBoxRef = useRef<HTMLDivElement>(null);
 
   // Confirmation dialog state
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -183,6 +188,37 @@ export default function DashboardPage() {
       setActionLoadingId(null);
     }
   };
+
+  const cspSuggestions = useMemo(() => {
+    const q = formCsp.trim().toLowerCase();
+    if (!q) return [];
+    return kiosks
+      .filter((k) => {
+        return (
+          k.cspCode.toLowerCase().includes(q) ||
+          k.operatorName.toLowerCase().includes(q) ||
+          (k.mobileNumber && k.mobileNumber.includes(q))
+        );
+      })
+      .slice(0, 6);
+  }, [kiosks, formCsp]);
+
+  const handleSelectSuggestion = (k: any) => {
+    setFormCsp(k.cspCode);
+    setFormName(k.operatorName || '');
+    setFormPhone(k.mobileNumber || '');
+    setShowCspSuggestions(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (cspBoxRef.current && !cspBoxRef.current.contains(e.target as Node)) {
+        setShowCspSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleCreateKiosk = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -711,18 +747,64 @@ export default function DashboardPage() {
 
             <form onSubmit={handleCreateKiosk} className="mt-4 sm:mt-5 space-y-3.5 sm:space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    CSP Code / Kiosk ID *
-                  </label>
+                <div ref={cspBoxRef} className="relative">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-slate-700">
+                      CSP Code / Kiosk ID *
+                    </label>
+                    {formCsp && cspSuggestions.length > 0 && (
+                      <span className="text-[10px] text-teal-600 font-semibold">
+                        {cspSuggestions.length} found
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     required
                     placeholder="e.g. 3A450557"
                     value={formCsp}
-                    onChange={(e) => setFormCsp(e.target.value)}
+                    onChange={(e) => {
+                      setFormCsp(e.target.value);
+                      setShowCspSuggestions(true);
+                      const clean = e.target.value.trim().toUpperCase();
+                      const match = kiosks.find((k) => k.cspCode.toUpperCase() === clean);
+                      if (match) {
+                        setFormName(match.operatorName || '');
+                        setFormPhone(match.mobileNumber || '');
+                      }
+                    }}
+                    onFocus={() => setShowCspSuggestions(true)}
                     className="w-full rounded-xl border border-slate-300 p-2.5 font-mono text-sm uppercase focus:border-teal-500 focus:outline-none"
+                    autoComplete="off"
                   />
+
+                  {/* Suggestions Dropdown */}
+                  {showCspSuggestions && cspSuggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 z-40 max-h-48 overflow-y-auto rounded-xl bg-white border border-teal-200 shadow-xl divide-y divide-slate-100">
+                      {cspSuggestions.map((item) => (
+                        <button
+                          key={item.cspCode}
+                          type="button"
+                          onClick={() => handleSelectSuggestion(item)}
+                          className="w-full px-3 py-2 text-left flex items-center justify-between hover:bg-teal-50 text-slate-800 transition"
+                        >
+                          <div>
+                            <span className="font-mono font-bold text-xs text-teal-800 mr-2">
+                              {item.cspCode}
+                            </span>
+                            <span className="text-xs text-slate-700 font-medium">
+                              {item.operatorName}
+                            </span>
+                          </div>
+                          {item.mobileNumber && (
+                            <span className="text-[10px] text-slate-500 font-mono">
+                              {item.mobileNumber}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div>
