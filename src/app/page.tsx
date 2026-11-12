@@ -20,9 +20,7 @@ import {
   Phone,
   MapPin,
   RefreshCw,
-  ExternalLink,
-  CreditCard,
-  Receipt
+  ExternalLink
 } from 'lucide-react';
 import { KioskLicense } from '@/lib/types';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -322,23 +320,6 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Link
-                href="/transactions"
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 sm:px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition"
-              >
-                <Receipt className="h-4 w-4 text-teal-600" />
-                <span className="hidden sm:inline">Billing Ledger</span>
-                <span className="sm:hidden">Ledger</span>
-              </Link>
-
-              <Link
-                href="/pricing"
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 sm:px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition"
-              >
-                <CreditCard className="h-4 w-4 text-teal-600" />
-                <span>Pricing &amp; QR</span>
-              </Link>
-
               <button
                 onClick={() => setIsAddModalOpen(true)}
                 className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-teal-600/20 hover:bg-teal-700 transition"
@@ -430,15 +411,12 @@ export default function DashboardPage() {
             </div>
 
             {/* Card 4: Subscription Revenue */}
-            <Link
-              href="/transactions"
-              className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm hover:border-teal-300 hover:shadow-md transition group block"
-            >
+            <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 group-hover:text-teal-700">
+                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Total Revenue
                 </span>
-                <div className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition">
+                <div className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
                   <IndianRupee className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
               </div>
@@ -446,11 +424,11 @@ export default function DashboardPage() {
                 <span className="text-lg sm:text-2xl font-black text-slate-900">
                   ₹{stats.totalRevenue.toLocaleString('en-IN')}
                 </span>
-                <span className="text-[10px] font-bold text-teal-600 group-hover:underline">
-                  Ledger →
+                <span className="text-[10px] font-semibold text-slate-400">
+                  Total Collections
                 </span>
               </div>
-            </Link>
+            </div>
           </div>
 
           {/* Kiosk Management Section */}
