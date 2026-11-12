@@ -50,7 +50,7 @@ export default function Sidebar() {
       </div>
 
       <div className="p-4 border-t border-slate-100 text-[11px] text-slate-400 text-center font-medium">
-        KioskPro Cloud v2.1.1
+        KioskPro Cloud v2.1.2
       </div>
     </aside>
   );

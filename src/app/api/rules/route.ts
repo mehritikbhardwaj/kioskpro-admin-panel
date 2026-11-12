@@ -4,10 +4,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const rules = {
-    version: '2.1.1',
-    latestAppVersion: '2.1.1',
+    version: '2.1.2',
+    latestAppVersion: '2.1.2',
     appDownloadUrl: 'https://kioskpro-admin-panel.vercel.app/software-download',
-    releaseNotes: 'KioskPro v2.1.1 - Smart Biometric Retry & Failure Receipt Auto-Fill Flow, Instant 1-Keystroke CIF & AEPS Modal Auto-Population, Safe Account Mode Multi-Tier Selector.',
+    releaseNotes: 'KioskPro v2.1.2 - Added Mandatory Mobile & WhatsApp Number Capture, Smart Biometric Auto-Retry Engine, 1-Keystroke Modal Pre-population, Digitally Signed Standalone Build.',
     selectors: {
       gps_connect: "button:contains('CONNECT'), input[value*='CONNECT']",
       gps_get_location: "button:contains('GET LOCATION'), input[value*='GET LOCATION']",
