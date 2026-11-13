@@ -247,11 +247,65 @@ export default function ScreensIntelligencePage() {
                       )}
                     </div>
 
+                    {/* Radio Options (if any) */}
+                    {selectedScreen.radios && selectedScreen.radios.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-teal-600" />
+                          Radio Options ({selectedScreen.radios.length})
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedScreen.radios.map((r, idx) => (
+                            <div
+                              key={idx}
+                              className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-2 ${
+                                r.checked
+                                  ? 'bg-teal-50 border-teal-300 text-teal-900 shadow-xs'
+                                  : 'bg-slate-50 border-slate-200 text-slate-700'
+                              }`}
+                            >
+                              <span className="font-bold">{r.label || r.value}</span>
+                              <span className="font-mono text-[10px] text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                                val: "{r.value}"
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Dropdown Selects (if any) */}
+                    {selectedScreen.selects && selectedScreen.selects.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <ListFilter className="h-3.5 w-3.5 text-teal-600" />
+                          Dropdown Selects ({selectedScreen.selects.length})
+                        </h3>
+                        <div className="space-y-2">
+                          {selectedScreen.selects.map((sel, idx) => (
+                            <div key={idx} className="p-3 border border-slate-200 rounded-xl bg-slate-50/50">
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className="font-bold text-xs text-slate-800">{sel.label || sel.name || 'Dropdown'}</span>
+                                {sel.id && <span className="font-mono text-[10px] text-teal-700 bg-white px-1.5 py-0.5 rounded border border-slate-200">#{sel.id}</span>}
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                {sel.options.map((opt, oIdx) => (
+                                  <span key={oIdx} className="bg-white border border-slate-200 text-slate-700 text-[10px] px-2 py-0.5 rounded">
+                                    {opt}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Buttons List */}
                     <div>
                       <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                         <CheckCircle2 className="h-3.5 w-3.5 text-teal-600" />
-                        Clickable Action Buttons ({selectedScreen.buttons.length})
+                        Clickable Action Buttons & Controls ({selectedScreen.buttons.length})
                       </h3>
 
                       {selectedScreen.buttons.length === 0 ? (
@@ -276,6 +330,23 @@ export default function ScreensIntelligencePage() {
                         </div>
                       )}
                     </div>
+
+                    {/* Table Headers (if any) */}
+                    {selectedScreen.tableHeaders && selectedScreen.tableHeaders.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <Layers className="h-3.5 w-3.5 text-teal-600" />
+                          Detected Data Table Columns ({selectedScreen.tableHeaders.length})
+                        </h3>
+                        <div className="flex flex-wrap gap-1.5">
+                          {selectedScreen.tableHeaders.map((th, idx) => (
+                            <span key={idx} className="bg-teal-50 border border-teal-200 text-teal-800 font-mono text-[11px] px-2.5 py-1 rounded-lg font-semibold">
+                              {th}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Modal Popup (if present) */}
                     {selectedScreen.hasModal && selectedScreen.modalHtml && (

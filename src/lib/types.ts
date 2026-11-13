@@ -83,6 +83,20 @@ export interface DomButtonInfo {
   className?: string;
 }
 
+export interface DomRadioInfo {
+  name: string;
+  value: string;
+  label: string;
+  checked?: boolean;
+}
+
+export interface DomSelectInfo {
+  id: string;
+  name: string;
+  label: string;
+  options: string[];
+}
+
 export interface DomCaptureSnapshot {
   screenKey: string;
   cspCode: string;
@@ -92,7 +106,10 @@ export interface DomCaptureSnapshot {
   activeMenu?: string;
   bodyPreview?: string;
   inputs: DomFieldInfo[];
+  radios?: DomRadioInfo[];
+  selects?: DomSelectInfo[];
   buttons: DomButtonInfo[];
+  tableHeaders?: string[];
   hasModal: boolean;
   modalTitle?: string;
   modalHtml?: string;
