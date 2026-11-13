@@ -68,3 +68,34 @@ export interface SubscriptionTransaction {
   status: 'COMPLETED' | 'PENDING' | 'REFUNDED';
   createdAt: string;
 }
+
+export interface DomFieldInfo {
+  id: string;
+  name: string;
+  placeholder: string;
+  type: string;
+  label?: string;
+}
+
+export interface DomButtonInfo {
+  text: string;
+  id: string;
+  className?: string;
+}
+
+export interface DomCaptureSnapshot {
+  screenKey: string;
+  cspCode: string;
+  appVersion?: string;
+  urlPath: string;
+  pageTitle: string;
+  activeMenu?: string;
+  bodyPreview?: string;
+  inputs: DomFieldInfo[];
+  buttons: DomButtonInfo[];
+  hasModal: boolean;
+  modalTitle?: string;
+  modalHtml?: string;
+  capturedAt: string;
+}
+

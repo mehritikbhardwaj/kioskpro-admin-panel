@@ -8,7 +8,8 @@ import {
   Users, 
   Radio, 
   CreditCard,
-  Receipt
+  Receipt,
+  Layers
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -18,6 +19,7 @@ export default function Sidebar() {
     { label: 'Dashboard', href: '/', icon: LayoutDashboard },
     { label: 'Kiosks & Licenses', href: '/kiosks', icon: Users },
     { label: 'Billing & Ledger', href: '/transactions', icon: Receipt },
+    { label: 'Screen Intelligence', href: '/screens', icon: Layers },
     { label: 'Remote Broadcast', href: '/broadcast', icon: Radio },
     { label: 'Pricing & UPI QR', href: '/pricing', icon: CreditCard },
   ];

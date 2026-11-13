@@ -1,7 +1,7 @@
 import { Redis } from '@upstash/redis';
 import fs from 'fs';
 import path from 'path';
-import { KioskLicense, BroadcastAnnouncement, SystemConfig, LicenseStatus, PlanPricing, SubscriptionTransaction, PaymentMethodType, PlanType } from './types';
+import { KioskLicense, BroadcastAnnouncement, SystemConfig, LicenseStatus, PlanPricing, SubscriptionTransaction, PaymentMethodType, PlanType, DomCaptureSnapshot } from './types';
 
 const INITIAL_KIOSKS: KioskLicense[] = [
   {
@@ -18,7 +18,7 @@ const INITIAL_KIOSKS: KioskLicense[] = [
     status: 'ACTIVE',
     notes: 'Primary Master Kiosk - 12 Months Subscribed',
     lastSeenAt: new Date().toISOString(),
-    appVersion: '2.2.3',
+    appVersion: '2.2.4',
   }
 ];
 
@@ -104,7 +104,7 @@ export const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
   distributorUpi: '9212716009@yescred',
   qrCodeUrl: '/qr_code.jpg',
   minRequiredVersion: '2.1.5',
-  latestVersion: '2.2.3',
+  latestVersion: '2.2.4',
   plans: DEFAULT_PLANS,
 };
 
@@ -662,3 +662,94 @@ export async function addTransaction(
   await persistData();
   return newTxn;
 }
+
+// -------------------------------------------------------------
+// DOM CAPTURE / SCREEN INTELLIGENCE
+// -------------------------------------------------------------
+let inMemoryScreens = new Map<string, DomCaptureSnapshot>();
+let inMemoryRecentCaptures: DomCaptureSnapshot[] = [];
+
+export function normalizeScreenKey(titleOrPath: string): string {
+  const clean = (titleOrPath || 'unknown')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return clean.slice(0, 80) || 'unknown_screen';
+}
+
+export async function saveDomCapture(data: Omit<DomCaptureSnapshot, 'screenKey' | 'capturedAt'> & { screenKey?: string }): Promise<DomCaptureSnapshot> {
+  const screenKey = data.screenKey || normalizeScreenKey(data.pageTitle || data.urlPath);
+  const snapshot: DomCaptureSnapshot = {
+    ...data,
+    screenKey,
+    capturedAt: new Date().toISOString(),
+  };
+
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      // 1. Store/update screen library entry
+      await redis.set(`dom_screen:${screenKey}`, JSON.stringify(snapshot));
+      // 2. Add to screens index set
+      await redis.sadd('dom_screens_index', screenKey);
+      // 3. Push to recent global captures list (keep last 100)
+      await redis.lpush('dom_captures_recent', JSON.stringify(snapshot));
+      await redis.ltrim('dom_captures_recent', 0, 99);
+      // 4. Push to per-CSP recent captures list (keep last 50)
+      if (snapshot.cspCode) {
+        await redis.lpush(`dom_captures:${snapshot.cspCode}`, JSON.stringify(snapshot));
+        await redis.ltrim(`dom_captures:${snapshot.cspCode}`, 0, 49);
+      }
+    } catch (err) {
+      console.warn('Redis saveDomCapture error:', err);
+    }
+  }
+
+  inMemoryScreens.set(screenKey, snapshot);
+  inMemoryRecentCaptures.unshift(snapshot);
+  if (inMemoryRecentCaptures.length > 100) inMemoryRecentCaptures.pop();
+
+  return snapshot;
+}
+
+export async function getCapturedScreens(): Promise<DomCaptureSnapshot[]> {
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const keys = await redis.smembers<string[]>('dom_screens_index');
+      if (Array.isArray(keys) && keys.length > 0) {
+        const screens: DomCaptureSnapshot[] = [];
+        for (const k of keys) {
+          const item = await redis.get<string | DomCaptureSnapshot>(`dom_screen:${k}`);
+          if (item) {
+            screens.push(typeof item === 'string' ? JSON.parse(item) : item);
+          }
+        }
+        screens.sort((a, b) => new Date(b.capturedAt).getTime() - new Date(a.capturedAt).getTime());
+        return screens;
+      }
+    } catch (err) {
+      console.warn('Redis getCapturedScreens error:', err);
+    }
+  }
+
+  return Array.from(inMemoryScreens.values()).sort(
+    (a, b) => new Date(b.capturedAt).getTime() - new Date(a.capturedAt).getTime()
+  );
+}
+
+export async function getRecentCaptures(limit: number = 50): Promise<DomCaptureSnapshot[]> {
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const list = await redis.lrange<string[]>('dom_captures_recent', 0, limit - 1);
+      if (Array.isArray(list) && list.length > 0) {
+        return list.map(item => (typeof item === 'string' ? JSON.parse(item) : item));
+      }
+    } catch (err) {
+      console.warn('Redis getRecentCaptures error:', err);
+    }
+  }
+  return inMemoryRecentCaptures.slice(0, limit);
+}
+
