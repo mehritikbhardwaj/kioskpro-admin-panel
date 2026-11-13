@@ -18,7 +18,7 @@ const INITIAL_KIOSKS: KioskLicense[] = [
     status: 'ACTIVE',
     notes: 'Primary Master Kiosk - 12 Months Subscribed',
     lastSeenAt: new Date().toISOString(),
-    appVersion: '2.2.6',
+    appVersion: '2.2.7',
   }
 ];
 
@@ -104,7 +104,7 @@ export const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
   distributorUpi: '9212716009@yescred',
   qrCodeUrl: '/qr_code.jpg',
   minRequiredVersion: '2.1.5',
-  latestVersion: '2.2.6',
+  latestVersion: '2.2.7',
   plans: DEFAULT_PLANS,
 };
 
@@ -678,7 +678,10 @@ export function normalizeScreenKey(titleOrPath: string): string {
 }
 
 export async function saveDomCapture(data: Omit<DomCaptureSnapshot, 'screenKey' | 'capturedAt'> & { screenKey?: string }): Promise<DomCaptureSnapshot> {
-  const screenKey = data.screenKey || normalizeScreenKey(data.pageTitle || data.urlPath);
+  const pathPart = (data.urlPath || '').split('?')[0].replace(/^\/|\/$/g, '');
+  const titlePart = data.pageTitle && data.pageTitle !== 'Kiosk App' ? data.pageTitle : '';
+  const keySource = pathPart ? (titlePart ? `${pathPart}_${titlePart}` : pathPart) : (titlePart || 'screen');
+  const screenKey = data.screenKey || normalizeScreenKey(keySource);
   const snapshot: DomCaptureSnapshot = {
     ...data,
     screenKey,

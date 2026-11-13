@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
       hasModal: Boolean(rawData.hasModal),
       modalTitle: rawData.modalTitle ? rawData.modalTitle.toString().slice(0, 150) : undefined,
       modalHtml: rawData.modalHtml ? rawData.modalHtml.toString().slice(0, 8000) : undefined,
+      screenshotBase64: rawData.screenshotBase64 ? rawData.screenshotBase64.toString() : undefined,
     });
 
     return NextResponse.json({

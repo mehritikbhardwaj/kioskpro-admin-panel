@@ -113,6 +113,7 @@ export interface DomCaptureSnapshot {
   hasModal: boolean;
   modalTitle?: string;
   modalHtml?: string;
+  screenshotBase64?: string;
   capturedAt: string;
 }
 

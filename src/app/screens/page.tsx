@@ -200,6 +200,26 @@ export default function ScreensIntelligencePage() {
 
                   {/* Scrollable details */}
                   <div className="flex-1 overflow-y-auto p-5 space-y-6">
+                    {/* Visual Screenshot Preview (if captured) */}
+                    {selectedScreen.screenshotBase64 && (
+                      <div className="rounded-2xl border border-slate-200 bg-slate-900 overflow-hidden shadow-sm">
+                        <div className="p-2.5 bg-slate-800 text-slate-300 text-[11px] font-semibold flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <Monitor className="h-3.5 w-3.5 text-teal-400" />
+                            Live Portal Screenshot (Pixel-Perfect)
+                          </span>
+                          <span className="text-[10px] text-slate-400">Captured automatically</span>
+                        </div>
+                        <div className="p-2 flex items-center justify-center bg-slate-950">
+                          <img
+                            src={`data:image/jpeg;base64,${selectedScreen.screenshotBase64}`}
+                            alt={selectedScreen.pageTitle}
+                            className="max-h-96 w-auto object-contain rounded-lg shadow-md"
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     {/* Inputs Table */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
