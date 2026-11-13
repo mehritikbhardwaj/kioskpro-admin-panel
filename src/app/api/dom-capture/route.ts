@@ -1,16 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveDomCapture, getCapturedScreens, getRecentCaptures } from '@/lib/db';
+import { 
+  saveDomCapture, 
+  getCapturedScreens, 
+  getRecentCaptures, 
+  isRemoteScreenshotEnabled, 
+  setRemoteScreenshotToggle,
+  saveScreenScreenshot
+} from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const mode = searchParams.get('mode');
+
     const body = await req.json();
     if (!body) {
       return NextResponse.json({ success: false, error: 'Empty body' }, { status: 400 });
     }
 
-    // Support both nested { cspCode, appVersion, data: { ... } } and flat object
+    // 1. Toggle Endpoint
+    if (mode === 'toggle') {
+      const enabled = Boolean(body.enabled);
+      const cspCode = body.cspCode ? body.cspCode.toString().trim() : undefined;
+      await setRemoteScreenshotToggle(enabled, cspCode);
+      return NextResponse.json({ success: true, enabled, cspCode: cspCode || 'GLOBAL' });
+    }
+
+    // 2. Direct Screenshot Upload
+    if (mode === 'screenshot' || (body.screenKey && body.screenshotBase64 && !body.inputs)) {
+      const screenKey = body.screenKey;
+      const base64 = body.screenshotBase64;
+      await saveScreenScreenshot(screenKey, base64);
+      return NextResponse.json({ success: true, screenKey, screenshotSaved: true });
+    }
+
+    // 3. Regular DOM Snapshot Upload
     const rawData = body.data || body;
     const cspCode = (body.cspCode || rawData.cspCode || 'UNKNOWN').toString().trim();
     const appVersion = (body.appVersion || rawData.appVersion || '').toString().trim();
@@ -33,10 +59,14 @@ export async function POST(req: NextRequest) {
       screenshotBase64: rawData.screenshotBase64 ? rawData.screenshotBase64.toString() : undefined,
     });
 
+    // Check if remote screenshot capture is currently requested by Admin for this CSP or globally
+    const requestScreenshot = await isRemoteScreenshotEnabled(cspCode);
+
     return NextResponse.json({
       success: true,
       screenKey: snapshot.screenKey,
       capturedAt: snapshot.capturedAt,
+      requestScreenshot,
     });
   } catch (error: any) {
     console.error('DOM capture POST error:', error);
@@ -51,6 +81,12 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const mode = searchParams.get('mode') || 'screens';
+
+    if (mode === 'toggle') {
+      const cspCode = searchParams.get('csp_code') || undefined;
+      const enabled = await isRemoteScreenshotEnabled(cspCode);
+      return NextResponse.json({ success: true, enabled, cspCode: cspCode || 'GLOBAL' });
+    }
 
     if (mode === 'recent') {
       const limit = parseInt(searchParams.get('limit') || '50', 10);

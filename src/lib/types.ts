@@ -19,6 +19,7 @@ export interface KioskLicense {
   lastSeenAt?: string;
   hasUsedTrial?: boolean;
   appVersion?: string;
+  remoteScreenshotEnabled?: boolean;
 }
 
 export interface BroadcastAnnouncement {

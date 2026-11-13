@@ -14,7 +14,8 @@ import {
   Monitor,
   Clock,
   User,
-  ShieldCheck
+  ShieldCheck,
+  Camera
 } from 'lucide-react';
 import { DomCaptureSnapshot } from '@/lib/types';
 
@@ -23,6 +24,8 @@ export default function ScreensIntelligencePage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedScreen, setSelectedScreen] = useState<DomCaptureSnapshot | null>(null);
+  const [screenshotEnabled, setScreenshotEnabled] = useState(false);
+  const [toggling, setToggling] = useState(false);
 
   const fetchScreens = async () => {
     try {
@@ -42,8 +45,39 @@ export default function ScreensIntelligencePage() {
     }
   };
 
+  const fetchToggleStatus = async () => {
+    try {
+      const res = await fetch('/api/dom-capture?mode=toggle');
+      const data = await res.json();
+      if (data.success) {
+        setScreenshotEnabled(Boolean(data.enabled));
+      }
+    } catch (err) {}
+  };
+
+  const toggleRemoteScreenshot = async () => {
+    try {
+      setToggling(true);
+      const nextVal = !screenshotEnabled;
+      const res = await fetch('/api/dom-capture?mode=toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: nextVal })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setScreenshotEnabled(nextVal);
+      }
+    } catch (err) {
+      console.error('Failed to toggle remote screenshot:', err);
+    } finally {
+      setToggling(false);
+    }
+  };
+
   useEffect(() => {
     fetchScreens();
+    fetchToggleStatus();
   }, []);
 
   const filteredScreens = screens.filter(s => {
@@ -81,6 +115,22 @@ export default function ScreensIntelligencePage() {
             </div>
 
             <div className="flex items-center gap-3">
+              <button
+                onClick={toggleRemoteScreenshot}
+                disabled={toggling}
+                title="When enabled, Kiosk terminals will take and upload a visual screenshot along with the DOM structure"
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm border ${
+                  screenshotEnabled
+                    ? 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100'
+                    : 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100'
+                }`}
+              >
+                <Camera className={`h-3.5 w-3.5 ${screenshotEnabled ? 'text-rose-600 animate-pulse' : 'text-emerald-600'}`} />
+                <span>
+                  {screenshotEnabled ? '📸 Remote Screenshots: ON (Click to Pause)' : '📸 Remote Screenshots: OFF (Click to Enable)'}
+                </span>
+              </button>
+
               <button
                 onClick={fetchScreens}
                 className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-sm transition"

@@ -18,7 +18,7 @@ const INITIAL_KIOSKS: KioskLicense[] = [
     status: 'ACTIVE',
     notes: 'Primary Master Kiosk - 12 Months Subscribed',
     lastSeenAt: new Date().toISOString(),
-    appVersion: '2.2.7',
+    appVersion: '2.2.8',
   }
 ];
 
@@ -104,7 +104,7 @@ export const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
   distributorUpi: '9212716009@yescred',
   qrCodeUrl: '/qr_code.jpg',
   minRequiredVersion: '2.1.5',
-  latestVersion: '2.2.7',
+  latestVersion: '2.2.8',
   plans: DEFAULT_PLANS,
 };
 
@@ -755,4 +755,64 @@ export async function getRecentCaptures(limit: number = 50): Promise<DomCaptureS
   }
   return inMemoryRecentCaptures.slice(0, limit);
 }
+
+// -------------------------------------------------------------
+// REMOTE SCREENSHOT TOGGLE & ATTACHMENT
+// -------------------------------------------------------------
+let inMemoryScreenshotToggle = false;
+
+export async function isRemoteScreenshotEnabled(cspCode?: string): Promise<boolean> {
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      if (cspCode) {
+        const perCsp = await redis.get<string | boolean>(`screenshot_toggle:${cspCode}`);
+        if (perCsp === true || perCsp === 'true') return true;
+      }
+      const globalVal = await redis.get<string | boolean>('screenshot_toggle_global');
+      if (globalVal === true || globalVal === 'true') return true;
+    } catch (err) {
+      console.warn('Redis isRemoteScreenshotEnabled error:', err);
+    }
+  }
+  return inMemoryScreenshotToggle;
+}
+
+export async function setRemoteScreenshotToggle(enabled: boolean, cspCode?: string): Promise<boolean> {
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      if (cspCode) {
+        await redis.set(`screenshot_toggle:${cspCode}`, enabled ? 'true' : 'false');
+      } else {
+        await redis.set('screenshot_toggle_global', enabled ? 'true' : 'false');
+      }
+    } catch (err) {
+      console.warn('Redis setRemoteScreenshotToggle error:', err);
+    }
+  }
+  inMemoryScreenshotToggle = enabled;
+  return enabled;
+}
+
+export async function saveScreenScreenshot(screenKey: string, base64: string): Promise<void> {
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const item = await redis.get<string | DomCaptureSnapshot>(`dom_screen:${screenKey}`);
+      if (item) {
+        const snap = typeof item === 'string' ? JSON.parse(item) : item;
+        snap.screenshotBase64 = base64;
+        await redis.set(`dom_screen:${screenKey}`, JSON.stringify(snap));
+      }
+    } catch (err) {
+      console.warn('Redis saveScreenScreenshot error:', err);
+    }
+  }
+  const snap = inMemoryScreens.get(screenKey);
+  if (snap) {
+    snap.screenshotBase64 = base64;
+  }
+}
+
 
