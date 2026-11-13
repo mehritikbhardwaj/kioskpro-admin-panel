@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
     const appVersion = (body.appVersion || rawData.appVersion || '').toString().trim();
 
     const snapshot = await saveDomCapture({
+      screenKey: rawData.screenKey ? rawData.screenKey.toString().trim() : undefined,
       cspCode: cspCode || 'UNKNOWN',
       appVersion: appVersion || undefined,
       urlPath: (rawData.urlPath || '').toString().slice(0, 300),
@@ -59,8 +60,12 @@ export async function POST(req: NextRequest) {
       screenshotBase64: rawData.screenshotBase64 ? rawData.screenshotBase64.toString() : undefined,
     });
 
-    // Check if remote screenshot capture is currently requested by Admin for this CSP or globally
-    const requestScreenshot = await isRemoteScreenshotEnabled(cspCode);
+    // Request screenshot if:
+    // 1) Screen has no screenshot yet (first-time auto capture for every new screen)
+    // 2) OR Admin has Remote Screenshots Toggle turned ON (live continuous sync)
+    const toggleEnabled = await isRemoteScreenshotEnabled(cspCode);
+    const hasScreenshot = Boolean(snapshot.screenshotBase64);
+    const requestScreenshot = toggleEnabled || !hasScreenshot;
 
     return NextResponse.json({
       success: true,

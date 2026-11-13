@@ -190,11 +190,19 @@ export default function ScreensIntelligencePage() {
                           <span className="font-bold text-xs truncate max-w-[220px]">
                             {s.pageTitle || 'Untitled Screen'}
                           </span>
-                          {s.hasModal && (
-                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                              Modal
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1.5">
+                            {s.screenshotBase64 && (
+                              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                                <Monitor className="h-2.5 w-2.5" />
+                                SS
+                              </span>
+                            )}
+                            {s.hasModal && (
+                              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                Modal
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         <div className="text-[11px] text-slate-500 font-mono truncate">
@@ -250,23 +258,46 @@ export default function ScreensIntelligencePage() {
 
                   {/* Scrollable details */}
                   <div className="flex-1 overflow-y-auto p-5 space-y-6">
-                    {/* Visual Screenshot Preview (if captured) */}
-                    {selectedScreen.screenshotBase64 && (
+                    {/* Visual Screenshot Preview */}
+                    {selectedScreen.screenshotBase64 ? (
                       <div className="rounded-2xl border border-slate-200 bg-slate-900 overflow-hidden shadow-sm">
                         <div className="p-2.5 bg-slate-800 text-slate-300 text-[11px] font-semibold flex items-center justify-between">
                           <span className="flex items-center gap-1.5">
                             <Monitor className="h-3.5 w-3.5 text-teal-400" />
                             Live Portal Screenshot (Pixel-Perfect)
                           </span>
-                          <span className="text-[10px] text-slate-400">Captured automatically</span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                const w = window.open('');
+                                if (w) {
+                                  w.document.write(`<img src="data:image/jpeg;base64,${selectedScreen.screenshotBase64}" style="max-width:100%;height:auto;display:block;margin:auto;" />`);
+                                }
+                              }}
+                              className="text-[10px] text-teal-300 hover:text-teal-200 underline font-medium"
+                            >
+                              Open Full Size ↗
+                            </button>
+                            <span className="text-[10px] text-slate-400">• Captured live</span>
+                          </div>
                         </div>
-                        <div className="p-2 flex items-center justify-center bg-slate-950">
+                        <div className="p-3 flex items-center justify-center bg-slate-950">
                           <img
                             src={`data:image/jpeg;base64,${selectedScreen.screenshotBase64}`}
                             alt={selectedScreen.pageTitle}
-                            className="max-h-96 w-auto object-contain rounded-lg shadow-md"
+                            className="max-h-[420px] w-auto object-contain rounded-lg shadow-md border border-slate-800"
                           />
                         </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-5 text-center">
+                        <div className="mx-auto w-9 h-9 rounded-full bg-slate-200/70 flex items-center justify-center text-slate-500 mb-2">
+                          <Monitor className="h-4 w-4" />
+                        </div>
+                        <h4 className="text-xs font-bold text-slate-700">No Visual Screenshot Stored Yet</h4>
+                        <p className="text-[11px] text-slate-500 max-w-md mx-auto mt-1">
+                          With Remote Screenshots turned <b>ON</b> (top-right), KioskPro captures live portal screenshots automatically as CSPs navigate. You can also press <kbd className="px-1.5 py-0.5 bg-slate-200 text-slate-800 rounded font-mono font-bold text-[10px]">Ctrl+Shift+S</kbd> inside KioskPro to upload instantly.
+                        </p>
                       </div>
                     )}
 

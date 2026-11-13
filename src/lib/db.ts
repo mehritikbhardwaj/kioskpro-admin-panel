@@ -18,7 +18,7 @@ const INITIAL_KIOSKS: KioskLicense[] = [
     status: 'ACTIVE',
     notes: 'Primary Master Kiosk - 12 Months Subscribed',
     lastSeenAt: new Date().toISOString(),
-    appVersion: '2.2.8',
+    appVersion: '2.2.9',
   }
 ];
 
@@ -104,7 +104,7 @@ export const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
   distributorUpi: '9212716009@yescred',
   qrCodeUrl: '/qr_code.jpg',
   minRequiredVersion: '2.1.5',
-  latestVersion: '2.2.8',
+  latestVersion: '2.2.9',
   plans: DEFAULT_PLANS,
 };
 
@@ -691,6 +691,17 @@ export async function saveDomCapture(data: Omit<DomCaptureSnapshot, 'screenKey' 
   const redis = getRedisClient();
   if (redis) {
     try {
+      // Preserve existing screenshot if new capture doesn't contain one
+      if (!snapshot.screenshotBase64) {
+        const existing = await redis.get<string | DomCaptureSnapshot>(`dom_screen:${screenKey}`);
+        if (existing) {
+          const parsed = typeof existing === 'string' ? JSON.parse(existing) : existing;
+          if (parsed?.screenshotBase64) {
+            snapshot.screenshotBase64 = parsed.screenshotBase64;
+          }
+        }
+      }
+
       // 1. Store/update screen library entry
       await redis.set(`dom_screen:${screenKey}`, JSON.stringify(snapshot));
       // 2. Add to screens index set
@@ -705,6 +716,13 @@ export async function saveDomCapture(data: Omit<DomCaptureSnapshot, 'screenKey' 
       }
     } catch (err) {
       console.warn('Redis saveDomCapture error:', err);
+    }
+  }
+
+  if (!snapshot.screenshotBase64) {
+    const mem = inMemoryScreens.get(screenKey);
+    if (mem?.screenshotBase64) {
+      snapshot.screenshotBase64 = mem.screenshotBase64;
     }
   }
 
