@@ -557,40 +557,13 @@ export default function DashboardPage() {
 
                           <td className="px-5 py-4 text-right">
                             <div className="inline-flex items-center gap-1.5">
-                              {/* Quick +1d Trial */}
-                              <button
-                                onClick={() => promptRenew(kiosk, 1)}
-                                title="Grant 1-Day Free Trial"
-                                className="rounded-lg bg-purple-50 px-2 py-1 text-xs font-semibold text-purple-700 hover:bg-purple-100 transition"
-                              >
-                                +1d Trial
-                              </button>
-
-                              {/* Quick +30 Days */}
-                              <button
-                                onClick={() => promptRenew(kiosk, 30)}
-                                title="Renew for 30 Days"
-                                className="rounded-lg bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-100 transition"
-                              >
-                                +30d
-                              </button>
-
-                              {/* Quick +365 Days */}
-                              <button
-                                onClick={() => promptRenew(kiosk, 365)}
-                                title="Renew for 1 Year"
-                                className="rounded-lg bg-teal-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-teal-700 transition"
-                              >
-                                +1 Year
-                              </button>
-
                               {/* Suspend / Reactivate */}
                               {kiosk.status === 'ACTIVE' ? (
                                 <button
                                   onClick={() => promptToggleStatus(kiosk, 'SUSPENDED')}
                                   disabled={actionLoadingId === kiosk.id}
                                   title="Suspend License"
-                                  className={`rounded-lg bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition ${
+                                  className={`rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition ${
                                     actionLoadingId === kiosk.id ? 'opacity-60 cursor-wait' : ''
                                   }`}
                                 >
@@ -601,7 +574,7 @@ export default function DashboardPage() {
                                   onClick={() => promptToggleStatus(kiosk, 'ACTIVE')}
                                   disabled={actionLoadingId === kiosk.id}
                                   title="Unblock License"
-                                  className={`rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition ${
+                                  className={`rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition ${
                                     actionLoadingId === kiosk.id ? 'opacity-60 cursor-wait' : ''
                                   }`}
                                 >
@@ -700,43 +673,22 @@ export default function DashboardPage() {
                       </div>
 
                       {/* Mobile Touch Action Buttons */}
-                      <div className="grid grid-cols-4 gap-1.5 pt-1">
-                        <button
-                          onClick={() => promptRenew(kiosk, 1)}
-                          className="flex items-center justify-center py-1.5 rounded-lg bg-purple-50 border border-purple-200 text-purple-800 text-[11px] font-bold active:bg-purple-100 transition"
-                        >
-                          +1d
-                        </button>
-
-                        <button
-                          onClick={() => promptRenew(kiosk, 30)}
-                          className="flex items-center justify-center py-1.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-800 text-[11px] font-bold active:bg-teal-100 transition"
-                        >
-                          +30d
-                        </button>
-
-                        <button
-                          onClick={() => promptRenew(kiosk, 365)}
-                          className="flex items-center justify-center py-1.5 rounded-lg bg-teal-600 text-white text-[11px] font-bold shadow-sm active:bg-teal-700 transition"
-                        >
-                          +1y
-                        </button>
-
+                      <div className="pt-1">
                         {kiosk.status === 'ACTIVE' ? (
                           <button
                             onClick={() => promptToggleStatus(kiosk, 'SUSPENDED')}
                             disabled={actionLoadingId === kiosk.id}
-                            className="flex items-center justify-center py-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold active:bg-rose-100 transition"
+                            className="w-full flex items-center justify-center py-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold active:bg-rose-100 transition"
                           >
-                            {actionLoadingId === kiosk.id ? '...' : 'Block'}
+                            {actionLoadingId === kiosk.id ? 'Blocking...' : 'Block License'}
                           </button>
                         ) : (
                           <button
                             onClick={() => promptToggleStatus(kiosk, 'ACTIVE')}
                             disabled={actionLoadingId === kiosk.id}
-                            className="flex items-center justify-center py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold active:bg-emerald-100 transition"
+                            className="w-full flex items-center justify-center py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold active:bg-emerald-100 transition"
                           >
-                            {actionLoadingId === kiosk.id ? '...' : 'Unblock'}
+                            {actionLoadingId === kiosk.id ? 'Unblocking...' : 'Unblock License'}
                           </button>
                         )}
                       </div>
