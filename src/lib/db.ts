@@ -668,6 +668,7 @@ export async function addTransaction(
 // -------------------------------------------------------------
 let inMemoryScreens = new Map<string, DomCaptureSnapshot>();
 let inMemoryRecentCaptures: DomCaptureSnapshot[] = [];
+let inMemoryScreenHtml = new Map<string, string>();
 
 export function normalizeScreenKey(titleOrPath: string): string {
   const clean = (titleOrPath || 'unknown')
@@ -691,14 +692,23 @@ export async function saveDomCapture(data: Omit<DomCaptureSnapshot, 'screenKey' 
   const redis = getRedisClient();
   if (redis) {
     try {
-      // Preserve existing screenshot if new capture doesn't contain one
-      if (!snapshot.screenshotBase64) {
-        const existing = await redis.get<string | DomCaptureSnapshot>(`dom_screen:${screenKey}`);
-        if (existing) {
-          const parsed = typeof existing === 'string' ? JSON.parse(existing) : existing;
-          if (parsed?.screenshotBase64) {
-            snapshot.screenshotBase64 = parsed.screenshotBase64;
-          }
+      // Preserve existing screenshot & full HTML flag if new capture doesn't contain one
+      const existing = await redis.get<string | DomCaptureSnapshot>(`dom_screen:${screenKey}`);
+      if (existing) {
+        const parsed = typeof existing === 'string' ? JSON.parse(existing) : existing;
+        if (!snapshot.screenshotBase64 && parsed?.screenshotBase64) {
+          snapshot.screenshotBase64 = parsed.screenshotBase64;
+        }
+        if (parsed?.hasFullHtml) {
+          snapshot.hasFullHtml = true;
+          snapshot.fullHtmlSize = parsed.fullHtmlSize;
+        }
+      }
+
+      if (!snapshot.hasFullHtml) {
+        const exists = await redis.exists(`dom_screen_html:${screenKey}`);
+        if (exists === 1) {
+          snapshot.hasFullHtml = true;
         }
       }
 
@@ -832,5 +842,59 @@ export async function saveScreenScreenshot(screenKey: string, base64: string): P
     snap.screenshotBase64 = base64;
   }
 }
+
+// -------------------------------------------------------------
+// FULL HTML STORAGE & RETRIEVAL (One-Time Per Unique Screen)
+// -------------------------------------------------------------
+export async function hasScreenHtml(screenKey: string): Promise<boolean> {
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const exists = await redis.exists(`dom_screen_html:${screenKey}`);
+      return exists === 1;
+    } catch (err) {
+      console.warn('Redis hasScreenHtml error:', err);
+    }
+  }
+  return inMemoryScreenHtml.has(screenKey);
+}
+
+export async function saveScreenHtml(screenKey: string, html: string): Promise<void> {
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      await redis.set(`dom_screen_html:${screenKey}`, html);
+      const item = await redis.get<string | DomCaptureSnapshot>(`dom_screen:${screenKey}`);
+      if (item) {
+        const snap = typeof item === 'string' ? JSON.parse(item) : item;
+        snap.hasFullHtml = true;
+        snap.fullHtmlSize = html.length;
+        await redis.set(`dom_screen:${screenKey}`, JSON.stringify(snap));
+      }
+    } catch (err) {
+      console.warn('Redis saveScreenHtml error:', err);
+    }
+  }
+  inMemoryScreenHtml.set(screenKey, html);
+  const snap = inMemoryScreens.get(screenKey);
+  if (snap) {
+    snap.hasFullHtml = true;
+    snap.fullHtmlSize = html.length;
+  }
+}
+
+export async function getScreenHtml(screenKey: string): Promise<string | null> {
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const html = await redis.get<string>(`dom_screen_html:${screenKey}`);
+      if (html) return html;
+    } catch (err) {
+      console.warn('Redis getScreenHtml error:', err);
+    }
+  }
+  return inMemoryScreenHtml.get(screenKey) || null;
+}
+
 
 

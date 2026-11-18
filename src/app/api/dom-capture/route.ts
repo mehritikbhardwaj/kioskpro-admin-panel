@@ -5,7 +5,10 @@ import {
   getRecentCaptures, 
   isRemoteScreenshotEnabled, 
   setRemoteScreenshotToggle,
-  saveScreenScreenshot
+  saveScreenScreenshot,
+  hasScreenHtml,
+  saveScreenHtml,
+  getScreenHtml
 } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -36,7 +39,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, screenKey, screenshotSaved: true });
     }
 
-    // 3. Regular DOM Snapshot Upload
+    // 3. Direct Full HTML Upload (One-time per unique screen)
+    if (mode === 'html' || (body.screenKey && body.html && !body.inputs)) {
+      const screenKey = body.screenKey;
+      const html = body.html;
+      await saveScreenHtml(screenKey, html);
+      return NextResponse.json({ success: true, screenKey, htmlSaved: true });
+    }
+
+    // 4. Regular DOM Snapshot Upload
     const rawData = body.data || body;
     const cspCode = (body.cspCode || rawData.cspCode || 'UNKNOWN').toString().trim();
     const appVersion = (body.appVersion || rawData.appVersion || '').toString().trim();
@@ -67,11 +78,15 @@ export async function POST(req: NextRequest) {
     const hasScreenshot = Boolean(snapshot.screenshotBase64);
     const requestScreenshot = toggleEnabled || !hasScreenshot;
 
+    const htmlAlreadyExists = Boolean(snapshot.hasFullHtml) || await hasScreenHtml(snapshot.screenKey);
+    const requestFullHtml = !htmlAlreadyExists;
+
     return NextResponse.json({
       success: true,
       screenKey: snapshot.screenKey,
       capturedAt: snapshot.capturedAt,
       requestScreenshot,
+      requestFullHtml,
     });
   } catch (error: any) {
     console.error('DOM capture POST error:', error);
@@ -97,6 +112,28 @@ export async function GET(req: NextRequest) {
       const limit = parseInt(searchParams.get('limit') || '50', 10);
       const recent = await getRecentCaptures(limit);
       return NextResponse.json({ success: true, count: recent.length, data: recent });
+    }
+
+    if (mode === 'html') {
+      const screenKey = searchParams.get('screenKey') || '';
+      const download = searchParams.get('download') === 'true';
+      if (!screenKey) {
+        return NextResponse.json({ success: false, error: 'screenKey required' }, { status: 400 });
+      }
+      const html = await getScreenHtml(screenKey);
+      if (!html) {
+        return new Response('<html><body style="font-family:sans-serif;padding:40px;color:#333;"><h3>⚠️ Full HTML not captured yet for screen: ' + screenKey + '</h3><p>Full HTML is automatically captured the next time a terminal visits this screen.</p></body></html>', {
+          status: 404,
+          headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        });
+      }
+      const headers: Record<string, string> = {
+        'Content-Type': 'text/html; charset=utf-8',
+      };
+      if (download) {
+        headers['Content-Disposition'] = `attachment; filename="${screenKey}.html"`;
+      }
+      return new Response(html, { status: 200, headers });
     }
 
     const screens = await getCapturedScreens();

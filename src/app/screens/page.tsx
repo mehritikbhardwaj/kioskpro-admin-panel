@@ -202,6 +202,11 @@ export default function ScreensIntelligencePage() {
                                 Modal
                               </span>
                             )}
+                            {s.hasFullHtml && (
+                              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">
+                                HTML
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -232,13 +237,36 @@ export default function ScreensIntelligencePage() {
                 <div className="flex-1 flex flex-col overflow-hidden">
                   {/* Top Bar of details */}
                   <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col gap-1">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-sm font-bold text-slate-900">
-                        {selectedScreen.pageTitle}
-                      </h2>
-                      <span className="text-[11px] text-slate-500 font-mono">
-                        Key: {selectedScreen.screenKey}
-                      </span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-sm font-bold text-slate-900">
+                          {selectedScreen.pageTitle}
+                        </h2>
+                        {selectedScreen.hasFullHtml && (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">
+                            Full HTML Ready
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`/api/dom-capture?mode=html&screenKey=${encodeURIComponent(selectedScreen.screenKey)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Open full captured HTML in new tab to inspect with Chrome DevTools"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-teal-200 bg-teal-50 text-teal-800 text-xs font-semibold hover:bg-teal-100 transition shadow-2xs"
+                        >
+                          👁️ View Live HTML
+                        </a>
+                        <a
+                          href={`/api/dom-capture?mode=html&screenKey=${encodeURIComponent(selectedScreen.screenKey)}&download=true`}
+                          download={`${selectedScreen.screenKey}.html`}
+                          title="Download .html file to local PC"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-100 transition shadow-2xs"
+                        >
+                          📥 Download HTML
+                        </a>
+                      </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 mt-1">
